@@ -81,6 +81,7 @@ t() {
         "dir_added") echo "追加しました" ;;
         "search") echo "検索" ;;
         "path") echo "パス" ;;
+        "select_dir_prompt") echo "ディレクトリを選択" ;;
         "add_anyway") echo "それでも追加しますか?" ;;
 
         # === Registry ===
@@ -232,6 +233,7 @@ t() {
         "dir_added") echo "Added" ;;
         "search") echo "Search" ;;
         "path") echo "Path" ;;
+        "select_dir_prompt") echo "Select directory" ;;
         "add_anyway") echo "Add anyway?" ;;
 
         # === Registry ===
