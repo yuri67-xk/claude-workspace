@@ -215,8 +215,9 @@ cmd_add_dir() {
 
   local new_path="${1:-}"
   if [[ -z "$new_path" ]]; then
-    read -rep "  $(t "dir_add_path"): " new_path
+    new_path=$(select_dir_with_fzf "$(t "select_dir_prompt")")
   fi
+  [[ -z "$new_path" ]] && { info "$(t "cancel")"; exit 0; }
 
   local expanded_path
   expanded_path=$(expand_path "$new_path")
