@@ -81,6 +81,34 @@ expand_path() {
   fi
 }
 
+# Pick a directory with fzf (if available) or fall back to read.
+# Arguments: <prompt_label>
+# Outputs:   absolute path echoed to stdout, or empty string if cancelled
+select_dir_with_fzf() {
+  local prompt="${1:-}"
+  local result=""
+
+  if command -v fzf &>/dev/null; then
+    result=$(
+      find "$HOME" -maxdepth 4 -type d \
+        \( -name ".git" -o -name "node_modules" -o -name ".cache" \
+           -o -name "Library" -o -name "__pycache__" \) -prune \
+        -o -type d -print 2>/dev/null \
+      | fzf --height=40% --border \
+            --prompt="$prompt > " \
+            --preview="ls {}" \
+            --preview-window=right:40% \
+      || true
+    )
+    [[ -n "$result" ]] && result=$(expand_path "$result")
+  else
+    read -rep "  $prompt: " result
+    result=$(expand_path "$result")
+  fi
+
+  echo "$result"
+}
+
 # ──────────────────────────────
 # Relative time display (e.g., "3 days ago")
 # Arguments: <ISO8601 UTC timestamp>
