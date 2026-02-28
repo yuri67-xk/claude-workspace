@@ -157,6 +157,13 @@ t() {
         "menu_recent") echo "最近のワークスペース:" ;;
         "menu_create_new") echo "新規ワークスペースを作成" ;;
         "menu_quit") echo "終了" ;;
+        "press_enter") echo "Enter で続ける" ;;
+        "menu_action_resume") echo "▶ 起動" ;;
+        "menu_action_add_dir") echo "+ ディレクトリを追加" ;;
+        "menu_action_info") echo "ℹ 詳細情報" ;;
+        "menu_action_finder") echo "⊙ Finder で開く" ;;
+        "menu_action_forget") echo "✗ レジストリから削除" ;;
+        "menu_action_back") echo "← 戻る" ;;
 
         # === Usage ===
         "usage_title") echo "Claude Code マルチリポジトリ Workspace マネージャー" ;;
@@ -309,6 +316,13 @@ t() {
         "menu_recent") echo "Recent Workspaces:" ;;
         "menu_create_new") echo "Create new Workspace" ;;
         "menu_quit") echo "Quit" ;;
+        "press_enter") echo "Press Enter to continue" ;;
+        "menu_action_resume") echo "▶ Resume" ;;
+        "menu_action_add_dir") echo "+ Add Dir" ;;
+        "menu_action_info") echo "ℹ Info" ;;
+        "menu_action_finder") echo "⊙ Open in Finder" ;;
+        "menu_action_forget") echo "✗ Forget" ;;
+        "menu_action_back") echo "← Back" ;;
 
         # === Usage ===
         "usage_title") echo "Claude Code multi-repo workspace manager" ;;
