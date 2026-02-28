@@ -91,8 +91,8 @@ select_dir_with_fzf() {
   if command -v fzf &>/dev/null; then
     result=$(
       find "$HOME" -maxdepth 4 -type d \
-        \( -name ".git" -o -name "node_modules" -o -name ".cache" \
-           -o -name "Library" -o -name "__pycache__" \) -prune \
+        \( -path "$HOME/Library" -o -name ".git" -o -name "node_modules" \
+           -o -name ".cache" -o -name "__pycache__" \) -prune \
         -o -type d -print 2>/dev/null \
       | fzf --height=40% --border \
             --prompt="$prompt > " \
