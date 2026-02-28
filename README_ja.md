@@ -36,8 +36,8 @@ cw
 
   最近の Workspace:
 
-  [1] Store360 Refactor  3日前
-      /Users/yuri/WorkingProjects/store360-refactor
+  [1] My Project  3日前
+      /Users/yuri/WorkingProjects/my-project
 
   [2] My Feature         1週間前
       /Users/yuri/WorkingProjects/my-feature
@@ -64,10 +64,10 @@ cw new
   新規 Workspace を作成
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  Workspace 名: Store360 Refactor
+  Workspace 名: My Project
 
-  Workspace 名:  Store360 Refactor
-  作成先:        ~/WorkingProjects/Store360-Refactor
+  Workspace 名:  My Project
+  作成先:        ~/WorkingProjects/My-Project
   作成しますか? [Y/n]:
 ```
 
@@ -78,7 +78,7 @@ cw new
 名前を引数で渡すことも可能:
 
 ```bash
-cw new store360-refactor
+cw new my-project
 ```
 
 ---
@@ -98,7 +98,7 @@ cw resume   # または cw r
 既存ディレクトリを Workspace として登録する場合:
 
 ```bash
-cd ~/WorkingProjects/store360-refactor
+cd ~/WorkingProjects/my-project
 cw setup
 ```
 
@@ -112,7 +112,7 @@ cw setup
 ### Claude Code を起動
 
 ```bash
-cd ~/WorkingProjects/store360-refactor
+cd ~/WorkingProjects/my-project
 cw          # または cw launch
 ```
 
@@ -121,7 +121,7 @@ cw          # または cw launch
 名前を指定して起動することも可能:
 
 ```bash
-cw launch "Store360 Refactor"
+cw launch "My Project"
 ```
 
 ---
@@ -129,7 +129,7 @@ cw launch "Store360 Refactor"
 ### ディレクトリを後から追加
 
 ```bash
-cw add-dir ~/repos/store360-flutter-wrapper
+cw add-dir ~/repos/my-sub-repo
 ```
 
 ---
@@ -155,7 +155,7 @@ cw info
 ### レジストリから削除
 
 ```bash
-cd ~/WorkingProjects/store360-refactor
+cd ~/WorkingProjects/my-project
 cw forget
 ```
 
@@ -196,7 +196,7 @@ cw update
 
 ```
 ~/WorkingProjects/
-└── store360-refactor/
+└── my-project/
     ├── .workspace.json     ← cw の設定ファイル
     ├── CLAUDE.md           ← workspace コンテキスト (自動生成)
     └── notes/              ← 作業メモ (任意)
@@ -211,14 +211,14 @@ cw update
 
 ```json
 {
-  "name": "Store360 Refactor",
-  "description": "SDK monolith分解プロジェクト",
-  "workspace_path": "/Users/yuri/WorkingProjects/store360-refactor",
+  "name": "My Project",
+  "description": "サンプル・マルチリポジトリプロジェクト",
+  "workspace_path": "/Users/yuri/WorkingProjects/my-project",
   "created_at": "2025-06-01T12:00:00Z",
   "dirs": [
-    { "path": "/Users/yuri/repos/store360-ios-sdk", "role": "iOS SDK" },
-    { "path": "/Users/yuri/repos/store360-android-sdk", "role": "Android SDK" },
-    { "path": "/Users/yuri/repos/store360-flutter-wrapper", "role": "Flutter Wrapper" }
+    { "path": "/Users/yuri/repos/my-frontend", "role": "Frontend" },
+    { "path": "/Users/yuri/repos/my-backend", "role": "Backend" },
+    { "path": "/Users/yuri/repos/my-library", "role": "Shared Library" }
   ]
 }
 ```
@@ -229,8 +229,8 @@ cw update
 {
   "workspaces": [
     {
-      "name": "Store360 Refactor",
-      "path": "/Users/yuri/WorkingProjects/store360-refactor",
+      "name": "My Project",
+      "path": "/Users/yuri/WorkingProjects/my-project",
       "created_at": "2025-06-01T12:00:00Z",
       "last_used": "2025-06-10T09:00:00Z"
     }

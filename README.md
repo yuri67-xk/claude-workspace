@@ -36,8 +36,8 @@ cw
 
   Recent Workspaces:
 
-  [1] Store360 Refactor  3 days ago
-      /Users/yuri/WorkingProjects/store360-refactor
+  [1] My Project  3 days ago
+      /Users/yuri/WorkingProjects/my-project
 
   [2] My Feature         1 week ago
       /Users/yuri/WorkingProjects/my-feature
@@ -64,10 +64,10 @@ Interactive setup:
   Create new Workspace
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  Workspace name: Store360 Refactor
+  Workspace name: My Project
 
-  Workspace name:  Store360 Refactor
-  Location:        ~/WorkingProjects/Store360-Refactor
+  Workspace name:  My Project
+  Location:        ~/WorkingProjects/My-Project
   Create? [Y/n]:
 ```
 
@@ -78,7 +78,7 @@ Interactive setup:
 You can also pass the name as an argument:
 
 ```bash
-cw new store360-refactor
+cw new my-project
 ```
 
 ---
@@ -98,7 +98,7 @@ Shows a menu of registered Workspaces from anywhere.
 To register an existing directory as a Workspace:
 
 ```bash
-cd ~/WorkingProjects/store360-refactor
+cd ~/WorkingProjects/my-project
 cw setup
 ```
 
@@ -112,7 +112,7 @@ Generated files:
 ### Launch Claude Code
 
 ```bash
-cd ~/WorkingProjects/store360-refactor
+cd ~/WorkingProjects/my-project
 cw          # or cw launch
 ```
 
@@ -121,7 +121,7 @@ Launches Claude Code with `--add-dir` for all directories registered in `.worksp
 You can also specify a name:
 
 ```bash
-cw launch "Store360 Refactor"
+cw launch "My Project"
 ```
 
 ---
@@ -129,7 +129,7 @@ cw launch "Store360 Refactor"
 ### Add a directory later
 
 ```bash
-cw add-dir ~/repos/store360-flutter-wrapper
+cw add-dir ~/repos/my-sub-repo
 ```
 
 ---
@@ -155,7 +155,7 @@ cw info
 ### Remove from registry
 
 ```bash
-cd ~/WorkingProjects/store360-refactor
+cd ~/WorkingProjects/my-project
 cw forget
 ```
 
@@ -206,7 +206,7 @@ cw lang en    # Switch to English
 
 ```
 ~/WorkingProjects/
-└── store360-refactor/
+└── my-project/
     ├── .workspace.json     ← cw configuration
     ├── CLAUDE.md           ← workspace context (auto-generated)
     └── notes/              ← notes (optional)
@@ -222,14 +222,14 @@ cw lang en    # Switch to English
 
 ```json
 {
-  "name": "Store360 Refactor",
-  "description": "SDK monolith decomposition project",
-  "workspace_path": "/Users/yuri/WorkingProjects/store360-refactor",
+  "name": "My Project",
+  "description": "Sample multi-repo project",
+  "workspace_path": "/Users/yuri/WorkingProjects/my-project",
   "created_at": "2025-06-01T12:00:00Z",
   "dirs": [
-    { "path": "/Users/yuri/repos/store360-ios-sdk", "role": "iOS SDK" },
-    { "path": "/Users/yuri/repos/store360-android-sdk", "role": "Android SDK" },
-    { "path": "/Users/yuri/repos/store360-flutter-wrapper", "role": "Flutter Wrapper" }
+    { "path": "/Users/yuri/repos/my-frontend", "role": "Frontend" },
+    { "path": "/Users/yuri/repos/my-backend", "role": "Backend" },
+    { "path": "/Users/yuri/repos/my-library", "role": "Shared Library" }
   ]
 }
 ```
@@ -240,8 +240,8 @@ cw lang en    # Switch to English
 {
   "workspaces": [
     {
-      "name": "Store360 Refactor",
-      "path": "/Users/yuri/WorkingProjects/store360-refactor",
+      "name": "My Project",
+      "path": "/Users/yuri/WorkingProjects/my-project",
       "created_at": "2025-06-01T12:00:00Z",
       "last_used": "2025-06-10T09:00:00Z"
     }
