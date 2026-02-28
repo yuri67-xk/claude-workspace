@@ -64,11 +64,11 @@ cmd_setup() {
   local dir_roles=()
 
   while true; do
-    read -rep "  $(t "path") (empty Enter to finish): " raw_path
+    local raw_path
+    raw_path=$(select_dir_with_fzf "$(t "select_dir_prompt")")
     [[ -z "$raw_path" ]] && break
 
-    local expanded_path
-    expanded_path=$(expand_path "$raw_path")
+    local expanded_path="$raw_path"
 
     if [[ ! -d "$expanded_path" ]]; then
       warn "$(t "dir_not_found"): $expanded_path"
