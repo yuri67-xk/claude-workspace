@@ -1,0 +1,161 @@
+#!/usr/bin/env bash
+# claude-workspace (cw) - Claude Code multi-repo workspace manager
+set -euo pipefail
+
+CW_VERSION="0.2.0"
+CW_DIR="${CW_HOME:-$HOME/.claude-workspace}"
+CW_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)"
+
+# ライブラリ読み込み（依存関係の順序を保持）
+source "$CW_LIB_DIR/utils.sh"
+source "$CW_LIB_DIR/registry.sh"
+source "$CW_LIB_DIR/setup.sh"
+source "$CW_LIB_DIR/launch.sh"
+source "$CW_LIB_DIR/list.sh"
+source "$CW_LIB_DIR/info.sh"
+source "$CW_LIB_DIR/new.sh"
+source "$CW_LIB_DIR/menu.sh"
+source "$CW_LIB_DIR/update.sh"
+
+usage() {
+  cat <<EOF
+$(bold "claude-workspace (cw)") v${CW_VERSION}
+Claude Code マルチリポジトリ Workspace マネージャー
+
+$(bold "使い方:")
+  cw                    Workspace なら即起動、なければメニューを表示
+  cw new [name]         新規 Workspace を作成して起動
+  cw resume             Workspace 選択メニューを表示
+  cw setup              現在のディレクトリを workspace としてセットアップ
+  cw launch [name]      workspace を起動 (Claude Code を --add-dir 付きで起動)
+  cw list               登録済み workspace 一覧
+  cw info [name]        workspace の詳細情報
+  cw add-dir <path>     既存 workspace にディレクトリを追加
+  cw forget             現在の workspace をレジストリから削除
+  cw scan               WorkingProjects/ をスキャンして未登録 workspace を一括登録
+  cw update             ソースから最新版をインストール (git pull + コピー)
+  cw version            バージョン表示
+
+$(bold "例:")
+  cw                    # どこからでも OK: 起動 or メニュー
+  cw new store360       # ~/WorkingProjects/store360/ を作成してセットアップ
+  cw resume             # 既存 workspace を選んで再開
+  cw launch Store360    # 名前指定で起動
+EOF
+}
+
+# WorkingProjects/ をスキャンして未登録 workspace を一括登録
+cmd_scan() {
+  require_jq
+
+  local search_base="${WORKING_PROJECTS_DIR:-$HOME/WorkingProjects}"
+
+  echo ""
+  echo "$(bold "Workspace スキャン")"
+  echo "  $(dim "検索: $search_base")"
+  echo ""
+
+  if [[ ! -d "$search_base" ]]; then
+    warn "ディレクトリが見つかりません: $search_base"
+    exit 0
+  fi
+
+  local found=0
+  local registered=0
+
+  while IFS= read -r ws_file; do
+    local ws_dir ws_name
+    ws_dir=$(dirname "$ws_file")
+    ws_name=$(ws_get "$ws_file" '.name')
+    found=$((found + 1))
+
+    # すでにレジストリにあるか確認
+    local existing
+    existing=$(registry_get_by_name "$ws_name")
+
+    if [[ -n "$existing" && "$existing" == "$ws_dir" ]]; then
+      info "スキップ (登録済み): $ws_name"
+    else
+      registry_add "$ws_name" "$ws_dir"
+      success "登録: $ws_name  $(dim "$ws_dir")"
+      registered=$((registered + 1))
+    fi
+  done < <(find "$search_base" -maxdepth 2 -name ".workspace.json" 2>/dev/null | sort)
+
+  echo ""
+  if [[ $found -eq 0 ]]; then
+    info "Workspace が見つかりませんでした"
+  else
+    info "${found} 件のうち ${registered} 件を新規登録しました"
+  fi
+}
+
+# レジストリから現在ディレクトリの workspace を削除
+cmd_forget() {
+  local target_dir
+  target_dir="$(pwd)"
+
+  if ! is_workspace "$target_dir"; then
+    error "現在のディレクトリは workspace ではありません"
+    exit 1
+  fi
+
+  local ws_name
+  ws_name=$(ws_get "$target_dir/$WORKSPACE_FILE" '.name')
+
+  echo ""
+  warn "「${ws_name}」をレジストリから削除します"
+  echo "  $(dim "※ ファイル (.workspace.json, CLAUDE.md) は削除されません")"
+  echo ""
+  read -rp "  続けますか? [y/N]: " confirm
+  [[ "$confirm" =~ ^[Yy]$ ]] || { info "キャンセルしました"; exit 0; }
+
+  registry_remove "$target_dir"
+  success "レジストリから削除しました: $ws_name"
+}
+
+main() {
+  local cmd="${1:-}"
+
+  case "$cmd" in
+    # ──────────────────────────────
+    # スマート起動: workspace なら即起動、なければメニュー
+    # ──────────────────────────────
+    "")
+      if is_workspace "$(pwd)"; then
+        cmd_launch
+      else
+        cmd_menu
+      fi
+      ;;
+
+    # ──────────────────────────────
+    # 新機能
+    # ──────────────────────────────
+    new|n)        cmd_new "${@:2}" ;;
+    resume|r)     cmd_menu ;;
+    forget)       cmd_forget ;;
+    scan)         cmd_scan ;;
+    update)       cmd_update ;;
+
+    # ──────────────────────────────
+    # 既存コマンド
+    # ──────────────────────────────
+    setup)        cmd_setup "${@:2}" ;;
+    launch)       cmd_launch "${@:2}" ;;
+    list|ls)      cmd_list ;;
+    info)         cmd_info "${@:2}" ;;
+    add-dir)      cmd_add_dir "${@:2}" ;;
+    version|-v|--version) echo "cw v${CW_VERSION}" ;;
+    help|-h|--help) usage ;;
+
+    *)
+      error "不明なコマンド: $cmd"
+      echo ""
+      usage
+      exit 1
+      ;;
+  esac
+}
+
+main "$@"
