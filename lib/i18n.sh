@@ -169,7 +169,7 @@ t() {
         "usage_title") echo "Claude Code マルチリポジトリ Workspace マネージャー" ;;
         "usage") echo "使い方" ;;
         "usage_examples") echo "例" ;;
-        "usage_launch_or_menu") echo "Workspace なら即起動、なければメニューを表示" ;;
+        "usage_launch_or_menu") echo "ワークスペースメニューを表示" ;;
         "usage_new") echo "新規 Workspace を作成して起動" ;;
         "usage_resume") echo "Workspace 選択メニューを表示" ;;
         "usage_setup") echo "現在のディレクトリを workspace としてセットアップ" ;;
@@ -328,7 +328,7 @@ t() {
         "usage_title") echo "Claude Code multi-repo workspace manager" ;;
         "usage") echo "Usage" ;;
         "usage_examples") echo "Examples" ;;
-        "usage_launch_or_menu") echo "Launch if in Workspace, otherwise show menu" ;;
+        "usage_launch_or_menu") echo "Show workspace menu" ;;
         "usage_new") echo "Create new Workspace and launch" ;;
         "usage_resume") echo "Show Workspace selection menu" ;;
         "usage_setup") echo "Setup current directory as a Workspace" ;;

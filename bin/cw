@@ -122,14 +122,10 @@ main() {
 
   case "$cmd" in
     # ──────────────────────────────
-    # Smart launch: launch if in workspace, otherwise show menu
+    # Show workspace menu
     # ──────────────────────────────
     "")
-      if is_workspace "$(pwd)"; then
-        cmd_launch
-      else
-        cmd_menu
-      fi
+      cmd_menu
       ;;
 
     # ──────────────────────────────
