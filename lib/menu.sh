@@ -232,15 +232,15 @@ PREVIEW
 # Numbered picker (no fzf): returns selected PATH or CREATE_NEW or empty
 # ──────────────────────────────
 _menu_numbered_pick() {
-  echo ""
-  echo "$(bold "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")"
-  echo "$(bold "  claude-workspace (cw)")"
-  echo "$(bold "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")"
+  echo "" >&2
+  echo "$(bold "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")" >&2
+  echo "$(bold "  claude-workspace (cw)")" >&2
+  echo "$(bold "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")" >&2
 
   if [[ ${#_CW_MENU_PATHS[@]} -eq 0 ]]; then
-    echo ""
-    info "$(t "workspace_not_found")"
-    echo ""
+    echo "" >&2
+    info "$(t "workspace_not_found")" >&2
+    echo "" >&2
     read -rep "  $(t "new_workspace")? [Y/n]: " ans
     if [[ ! "$ans" =~ ^[Nn]$ ]]; then
       echo "CREATE_NEW"
@@ -250,9 +250,9 @@ _menu_numbered_pick() {
     return 0
   fi
 
-  echo ""
-  echo "  $(bold "$(t "menu_recent")")"
-  echo ""
+  echo "" >&2
+  echo "  $(bold "$(t "menu_recent")")" >&2
+  echo "" >&2
 
   local i=0
   local idx
@@ -280,19 +280,19 @@ _menu_numbered_pick() {
       [[ -n "$rel" ]] && time_label="  $(dim "$rel")"
     fi
 
-    printf "  [%d] $(bold "%s")%s%s%s\n" "$i" "$name" "$time_label" "$unreg_label" "$status_marker"
-    printf "      $(dim "%s")\n" "$path"
-    echo ""
+    printf "  [%d] $(bold "%s")%s%s%s\n" "$i" "$name" "$time_label" "$unreg_label" "$status_marker" >&2
+    printf "      $(dim "%s")\n" "$path" >&2
+    echo "" >&2
   done
 
-  echo "  $(dim "────────────────────────────────────────")"
-  echo "  [N] $(t "menu_create_new")"
-  echo "  [Q] $(t "menu_quit")"
-  echo ""
+  echo "  $(dim "────────────────────────────────────────")" >&2
+  echo "  [N] $(t "menu_create_new")" >&2
+  echo "  [Q] $(t "menu_quit")" >&2
+  echo "" >&2
 
   local choice
   read -rep "  $(t "cmd_select") [1-${i} / N / Q]: " choice
-  echo ""
+  echo "" >&2
 
   case "$choice" in
     [Nn])
@@ -308,7 +308,7 @@ _menu_numbered_pick() {
         local sel_idx=$(( choice - 1 ))
         echo "${_CW_MENU_PATHS[$sel_idx]}"
       else
-        error "$(t "invalid"): $choice"
+        error "$(t "invalid"): $choice" >&2
         echo ""
       fi
       ;;
@@ -365,6 +365,7 @@ _menu_submenu_pick() {
       3) action="$info_label" ;;
       4) action="$finder_label" ;;
       5) action="$forget_label" ;;
+      6) action="$back_label" ;;
       *) action="$back_label" ;;
     esac
   fi
