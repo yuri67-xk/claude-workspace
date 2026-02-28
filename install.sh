@@ -19,7 +19,7 @@ echo "→ 依存関係を確認しています..."
 if ! command -v jq &>/dev/null; then
   echo "  ✗ jq が必要です"
   if command -v brew &>/dev/null; then
-    read -rp "  brew install jq を実行しますか? [Y/n]: " ans
+    read -rep "  brew install jq を実行しますか? [Y/n]: " ans
     if [[ ! "$ans" =~ ^[Nn]$ ]]; then
       brew install jq
     else
@@ -89,7 +89,7 @@ fi
 # WorkingProjects ディレクトリ
 DEFAULT_WP_DIR="$HOME/WorkingProjects"
 echo ""
-read -rp "  WorkingProjects ディレクトリ [${DEFAULT_WP_DIR}]: " wp_dir_input
+read -rep "  WorkingProjects ディレクトリ [${DEFAULT_WP_DIR}]: " wp_dir_input
 WP_DIR="${wp_dir_input:-$DEFAULT_WP_DIR}"
 
 # ── パスを絶対パスに正規化 ──────────────────────────────

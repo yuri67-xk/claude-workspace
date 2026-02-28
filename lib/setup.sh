@@ -18,7 +18,7 @@ cmd_setup() {
     existing_name=$(ws_get "$target_dir/$WORKSPACE_FILE" '.name')
     echo "  $(t "workspace_name"): $(bold "$existing_name")"
     echo ""
-    read -rp "  $(t "re_setup") [y/N]: " confirm
+    read -rep "  $(t "re_setup") [y/N]: " confirm
     [[ "$confirm" =~ ^[Yy]$ ]] || { info "$(t "cancel")"; exit 0; }
     echo ""
   fi
@@ -40,7 +40,7 @@ cmd_setup() {
   else
     local default_name
     default_name="$(basename "$target_dir")"
-    read -rp "  $(t "workspace_name") [${default_name}]: " ws_name
+    read -rep "  $(t "workspace_name") [${default_name}]: " ws_name
     ws_name="${ws_name:-$default_name}"
     success "$(t "workspace_name"): $ws_name"
   fi
@@ -49,7 +49,7 @@ cmd_setup() {
   # Step 2: Description
   # ──────────────────────────────
   step "Step 2: $(t "setup_step2")"
-  read -rp "  $(t "workspace_desc"): " ws_description
+  read -rep "  $(t "workspace_desc"): " ws_description
   ws_description="${ws_description:-}"
 
   # ──────────────────────────────
@@ -64,7 +64,7 @@ cmd_setup() {
   local dir_roles=()
 
   while true; do
-    read -rp "  $(t "path") (empty Enter to finish): " raw_path
+    read -rep "  $(t "path") (empty Enter to finish): " raw_path
     [[ -z "$raw_path" ]] && break
 
     local expanded_path
@@ -72,12 +72,12 @@ cmd_setup() {
 
     if [[ ! -d "$expanded_path" ]]; then
       warn "$(t "dir_not_found"): $expanded_path"
-      read -rp "  $(t "add_anyway") [y/N]: " force
+      read -rep "  $(t "add_anyway") [y/N]: " force
       [[ "$force" =~ ^[Yy]$ ]] || continue
     fi
 
     # Role label (optional)
-    read -rp "  $(t "dir_add_role"): " role
+    read -rep "  $(t "dir_add_role"): " role
     role="${role:-}"
 
     dirs+=("$expanded_path")
@@ -215,7 +215,7 @@ cmd_add_dir() {
 
   local new_path="${1:-}"
   if [[ -z "$new_path" ]]; then
-    read -rp "  $(t "dir_add_path"): " new_path
+    read -rep "  $(t "dir_add_path"): " new_path
   fi
 
   local expanded_path
@@ -223,7 +223,7 @@ cmd_add_dir() {
 
   if [[ ! -d "$expanded_path" ]]; then
     warn "$(t "dir_not_found"): $expanded_path"
-    read -rp "  $(t "add_anyway") [y/N]: " force
+    read -rep "  $(t "add_anyway") [y/N]: " force
     [[ "$force" =~ ^[Yy]$ ]] || exit 0
   fi
 
@@ -233,7 +233,7 @@ cmd_add_dir() {
     exit 0
   fi
 
-  read -rp "  $(t "dir_add_role"): " role
+  read -rep "  $(t "dir_add_role"): " role
 
   # Add to workspace.json
   ws_set "$ws_file" \

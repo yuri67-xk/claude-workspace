@@ -22,7 +22,7 @@ cmd_new() {
   local ws_name="${1:-}"
 
   if [[ -z "$ws_name" ]]; then
-    read -rp "  $(t "workspace_name"): " ws_name
+    read -rep "  $(t "workspace_name"): " ws_name
     ws_name="${ws_name%"${ws_name##*[![:space:]]}"}"  # trim trailing spaces
     ws_name="${ws_name#"${ws_name%%[![:space:]]*}"}"  # trim leading spaces
     if [[ -z "$ws_name" ]]; then
@@ -49,7 +49,7 @@ cmd_new() {
   if [[ -d "$target_dir" ]]; then
     if is_workspace "$target_dir"; then
       warn "$(t "already_exists")"
-      read -rp "  Launch as is? [Y/n]: " ans
+      read -rep "  Launch as is? [Y/n]: " ans
       if [[ ! "$ans" =~ ^[Nn]$ ]]; then
         cd "$target_dir"
         cmd_launch
@@ -57,11 +57,11 @@ cmd_new() {
       return
     else
       warn "$(t "directory") $(t "already_exists"): $target_dir"
-      read -rp "  $(t "workspace_setup")? [Y/n]: " ans
+      read -rep "  $(t "workspace_setup")? [Y/n]: " ans
       [[ "$ans" =~ ^[Nn]$ ]] && { info "$(t "cancel")"; exit 0; }
     fi
   else
-    read -rp "  $(t "create") [Y/n]: " confirm
+    read -rep "  $(t "create") [Y/n]: " confirm
     [[ "$confirm" =~ ^[Nn]$ ]] && { info "$(t "cancel")"; exit 0; }
 
     mkdir -p "$target_dir"

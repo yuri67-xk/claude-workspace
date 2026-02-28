@@ -110,7 +110,7 @@ cmd_forget() {
   warn "「${ws_name}」$(t "remove_from_registry")"
   echo "  $(dim "$(t "files_remain")")"
   echo ""
-  read -rp "  $(t "continue") [y/N]: " confirm
+  read -rep "  $(t "continue") [y/N]: " confirm
   [[ "$confirm" =~ ^[Yy]$ ]] || { info "$(t "cancel")"; exit 0; }
 
   registry_remove "$target_dir"

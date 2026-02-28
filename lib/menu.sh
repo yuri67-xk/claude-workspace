@@ -117,7 +117,7 @@ cmd_menu() {
   echo ""
 
   local choice
-  read -rp "  $(t "cmd_select") [1-${i} / N / Q]: " choice
+  read -rep "  $(t "cmd_select") [1-${i} / N / Q]: " choice
   echo ""
 
   case "$choice" in
@@ -164,7 +164,7 @@ cmd_menu() {
 # Prompt to create new (when 0 workspaces)
 # ──────────────────────────────
 _menu_prompt_new() {
-  read -rp "  $(t "new_workspace")? [Y/n]: " ans
+  read -rep "  $(t "new_workspace")? [Y/n]: " ans
   [[ "$ans" =~ ^[Nn]$ ]] && exit 0
   cmd_new
 }
