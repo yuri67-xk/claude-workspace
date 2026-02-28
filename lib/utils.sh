@@ -107,11 +107,11 @@ _relative_time() {
   fi
 
   local diff=$(( now - then ))
-  if   [[ $diff -lt 60 ]];      then echo "たった今"
-  elif [[ $diff -lt 3600 ]];    then echo "$(( diff / 60 ))分前"
-  elif [[ $diff -lt 86400 ]];   then echo "$(( diff / 3600 ))時間前"
-  elif [[ $diff -lt 604800 ]];  then echo "$(( diff / 86400 ))日前"
-  elif [[ $diff -lt 2592000 ]]; then echo "$(( diff / 604800 ))週間前"
-  else echo "$(( diff / 2592000 ))ヶ月前"
+  if   [[ $diff -lt 60 ]];      then t "just_now"
+  elif [[ $diff -lt 3600 ]];    then echo "$(( diff / 60 ))$(t "minutes_ago")"
+  elif [[ $diff -lt 86400 ]];   then echo "$(( diff / 3600 ))$(t "hours_ago")"
+  elif [[ $diff -lt 604800 ]];  then echo "$(( diff / 86400 ))$(t "days_ago")"
+  elif [[ $diff -lt 2592000 ]]; then echo "$(( diff / 604800 ))$(t "weeks_ago")"
+  else echo "$(( diff / 2592000 ))$(t "months_ago")"
   fi
 }

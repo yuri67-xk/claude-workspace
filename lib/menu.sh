@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# menu.sh - インタラクティブ Workspace 選択メニュー
+# menu.sh - Interactive Workspace selection menu
 
 cmd_menu() {
   require_jq
@@ -10,14 +10,14 @@ cmd_menu() {
   echo "$(bold "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")"
 
   # ──────────────────────────────
-  # レジストリ + ファイルシステムを統合して一覧構築
+  # Build list from registry + filesystem
   # ──────────────────────────────
   local menu_paths=()
   local menu_names=()
   local menu_times=()
-  local menu_registered=()  # true = レジストリ登録済み, false = 未登録
+  local menu_registered=()  # true = registered, false = unregistered
 
-  # 1) レジストリから取得（last_used 降順）
+  # 1) Get from registry (sorted by last_used desc)
   local ws_list
   ws_list=$(registry_list)
 
@@ -33,7 +33,7 @@ cmd_menu() {
     menu_registered+=("true")
   done < <(echo "$ws_list" | jq -c '.[]' 2>/dev/null)
 
-  # 2) ファイルシステムからスキャンして未登録のものを追記
+  # 2) Scan filesystem for unregistered workspaces
   local search_base="${WORKING_PROJECTS_DIR:-$HOME/WorkingProjects}"
   if [[ -d "$search_base" ]]; then
     while IFS= read -r ws_file; do
@@ -41,7 +41,7 @@ cmd_menu() {
       ws_dir=$(dirname "$ws_file")
       ws_name=$(ws_get "$ws_file" '.name')
 
-      # レジストリに既に存在するか確認
+      # Check if already in registry
       local already=false
       for p in "${menu_paths[@]+"${menu_paths[@]}"}"; do
         [[ "$p" == "$ws_dir" ]] && already=true && break
@@ -56,21 +56,21 @@ cmd_menu() {
   fi
 
   # ──────────────────────────────
-  # Workspace が 1 件もない場合
+  # No workspaces found
   # ──────────────────────────────
   if [[ ${#menu_paths[@]} -eq 0 ]]; then
     echo ""
-    info "Workspace が見つかりません"
+    info "$(t "workspace_not_found")"
     echo ""
     _menu_prompt_new
     return
   fi
 
   # ──────────────────────────────
-  # 一覧の表示
+  # Display list
   # ──────────────────────────────
   echo ""
-  echo "  $(bold "Workspace:")"
+  echo "  $(bold "$(t "menu_recent")")"
   echo ""
 
   local i=0
@@ -82,19 +82,19 @@ cmd_menu() {
 
     i=$((i + 1))
 
-    # 状態マーカー
+    # Status marker
     local status_marker=""
     if [[ ! -d "$path" ]]; then
-      status_marker="  $(red "✗ パス不在")"
+      status_marker="  $(red "✗ $(t "path_missing")")"
     elif [[ "$path" == "$(pwd)" ]]; then
-      status_marker="  $(green "← 現在地")"
+      status_marker="  $(green "← $(t "current_location")")"
     fi
 
-    # 未登録マーカー
+    # Unregistered marker
     local unreg_label=""
-    [[ "$registered" == "false" ]] && unreg_label="  $(yellow "未登録")"
+    [[ "$registered" == "false" ]] && unreg_label="  $(yellow "$(t "unregistered")")"
 
-    # 相対時間
+    # Relative time
     local time_label=""
     if [[ -n "$last_used" ]]; then
       local rel
@@ -109,15 +109,15 @@ cmd_menu() {
   done
 
   # ──────────────────────────────
-  # 選択肢の表示
+  # Options
   # ──────────────────────────────
   echo "  $(dim "────────────────────────────────────────")"
-  echo "  [N] 新規 Workspace を作成"
-  echo "  [Q] 終了"
+  echo "  [N] $(t "menu_create_new")"
+  echo "  [Q] $(t "menu_quit")"
   echo ""
 
   local choice
-  read -rp "  選択 [1-${i} / N / Q]: " choice
+  read -rp "  $(t "cmd_select") [1-${i} / N / Q]: " choice
   echo ""
 
   case "$choice" in
@@ -125,7 +125,7 @@ cmd_menu() {
       cmd_new
       ;;
     [Qq]|"")
-      info "終了します"
+      info "$(t "cmd_quit")"
       exit 0
       ;;
     *)
@@ -139,21 +139,21 @@ cmd_menu() {
         local selected_reg="${menu_registered[$sel_idx]}"
 
         if [[ ! -d "$selected_path" ]]; then
-          error "パスが存在しません: $selected_path"
-          echo "  $(dim "登録を削除するには: cw forget")"
+          error "$(t "dir_not_found"): $selected_path"
+          echo "  $(dim "cw forget")"
           exit 1
         fi
 
-        # 未登録の場合はここで自動登録
+        # Auto-register if unregistered
         if [[ "$selected_reg" == "false" ]]; then
           registry_add "$selected_name" "$selected_path"
-          success "レジストリに登録しました: $selected_name"
+          success "$(t "registered"): $selected_name"
         fi
 
         cd "$selected_path"
         cmd_launch
       else
-        error "無効な選択: $choice"
+        error "$(t "invalid"): $choice"
         exit 1
       fi
       ;;
@@ -161,10 +161,10 @@ cmd_menu() {
 }
 
 # ──────────────────────────────
-# 新規作成プロンプト（Workspace が 0 件のとき）
+# Prompt to create new (when 0 workspaces)
 # ──────────────────────────────
 _menu_prompt_new() {
-  read -rp "  新規 Workspace を作成しますか? [Y/n]: " ans
+  read -rp "  $(t "new_workspace")? [Y/n]: " ans
   [[ "$ans" =~ ^[Nn]$ ]] && exit 0
   cmd_new
 }

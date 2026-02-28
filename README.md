@@ -1,79 +1,81 @@
 # claude-workspace (cw)
 
-Claude Code マルチリポジトリ Workspace マネージャー
+> [日本語版 / Japanese](./README_ja.md)
 
-## インストール
+A multi-repository workspace manager for Claude Code.
+
+## Installation
 
 ```bash
-git clone https://github.com/yourname/claude-workspace ~/.claude-workspace-src
+git clone https://github.com/yuri67-xk/claude-workspace ~/.claude-workspace-src
 cd ~/.claude-workspace-src
 bash install.sh
 ```
 
-**依存関係**
+**Dependencies**
 - `jq` (`brew install jq`)
 - `claude` (Claude Code CLI)
 
 ---
 
-## 使い方
+## Usage
 
-### どこからでも `cw` を実行するだけ
+### Just run `cw` from anywhere
 
 ```bash
 cw
 ```
 
-- **Workspace ディレクトリにいる場合** → そのまま Claude Code を起動
-- **それ以外の場所にいる場合** → インタラクティブメニューを表示
+- **If inside a Workspace directory** → Launches Claude Code directly
+- **Otherwise** → Shows an interactive menu
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   claude-workspace (cw)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  最近の Workspace:
+  Recent Workspaces:
 
-  [1] Store360 Refactor  3日前
+  [1] Store360 Refactor  3 days ago
       /Users/yuri/WorkingProjects/store360-refactor
 
-  [2] My Feature         1週間前
+  [2] My Feature         1 week ago
       /Users/yuri/WorkingProjects/my-feature
 
   ────────────────────────────────────────
-  [N] 新規 Workspace を作成
-  [Q] 終了
+  [N] Create new Workspace
+  [Q] Quit
 
-  選択 [1-2 / N / Q]:
+  Select [1-2 / N / Q]:
 ```
 
 ---
 
-### 新規 Workspace を作成
+### Create a new Workspace
 
 ```bash
 cw new
 ```
 
-対話式で進みます:
+Interactive setup:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  新規 Workspace を作成
+  Create new Workspace
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  Workspace 名: Store360 Refactor
+  Workspace name: Store360 Refactor
 
-  Workspace 名:  Store360 Refactor
-  作成先:        ~/WorkingProjects/Store360-Refactor
-  作成しますか? [Y/n]:
+  Workspace name:  Store360 Refactor
+  Location:        ~/WorkingProjects/Store360-Refactor
+  Create? [Y/n]:
 ```
 
-- `~/WorkingProjects/<名前>/` フォルダを自動作成
-- そのまま `cw setup` に進む
-- セットアップ完了後、Claude Code を起動
+- Automatically creates `~/WorkingProjects/<name>/` folder
+- Proceeds to `cw setup`
+- Launches Claude Code after setup
 
-名前を引数で渡すことも可能:
+You can also pass the name as an argument:
 
 ```bash
 cw new store360-refactor
@@ -81,42 +83,42 @@ cw new store360-refactor
 
 ---
 
-### 既存 Workspace に作業再開
+### Resume an existing Workspace
 
 ```bash
-cw resume   # または cw r
+cw resume   # or cw r
 ```
 
-どこからでも実行でき、登録済み Workspace の一覧メニューを表示します。
+Shows a menu of registered Workspaces from anywhere.
 
 ---
 
-### Workspace の手動セットアップ
+### Manual Workspace setup
 
-既存ディレクトリを Workspace として登録する場合:
+To register an existing directory as a Workspace:
 
 ```bash
 cd ~/WorkingProjects/store360-refactor
 cw setup
 ```
 
-生成されるファイル:
-- `<workspace>/.workspace.json` — workspace 設定
-- `<workspace>/CLAUDE.md` — workspace コンテキスト (Claude Code が自動読み込み)
-- `<repo>/CLAUDE.md` — 各リポジトリに "Used by Workspaces" セクションを追記
+Generated files:
+- `<workspace>/.workspace.json` — Workspace configuration
+- `<workspace>/CLAUDE.md` — Workspace context (auto-loaded by Claude Code)
+- `<repo>/CLAUDE.md` — Appends "Used by Workspaces" section to each repository
 
 ---
 
-### Claude Code を起動
+### Launch Claude Code
 
 ```bash
 cd ~/WorkingProjects/store360-refactor
-cw          # または cw launch
+cw          # or cw launch
 ```
 
-`.workspace.json` に登録されたすべてのディレクトリを `--add-dir` 付きで Claude Code が起動します。
+Launches Claude Code with `--add-dir` for all directories registered in `.workspace.json`.
 
-名前を指定して起動することも可能:
+You can also specify a name:
 
 ```bash
 cw launch "Store360 Refactor"
@@ -124,7 +126,7 @@ cw launch "Store360 Refactor"
 
 ---
 
-### ディレクトリを後から追加
+### Add a directory later
 
 ```bash
 cw add-dir ~/repos/store360-flutter-wrapper
@@ -132,17 +134,17 @@ cw add-dir ~/repos/store360-flutter-wrapper
 
 ---
 
-### Workspace 一覧
+### List Workspaces
 
 ```bash
 cw list
 ```
 
-最近使用した順に表示します。
+Shows Workspaces sorted by last used.
 
 ---
 
-### Workspace 詳細
+### Show Workspace details
 
 ```bash
 cw info
@@ -150,55 +152,78 @@ cw info
 
 ---
 
-### レジストリから削除
+### Remove from registry
 
 ```bash
 cd ~/WorkingProjects/store360-refactor
 cw forget
 ```
 
-ファイル（`.workspace.json`、`CLAUDE.md`）はそのままで、レジストリの登録だけ削除します。
+Removes only the registry entry. Files (`.workspace.json`, `CLAUDE.md`) remain intact.
 
 ---
 
-## コマンド一覧
+### Update
 
-| コマンド | 説明 |
-|---------|------|
-| `cw` | Workspace なら即起動、なければメニューを表示 |
-| `cw new [name]` | 新規 Workspace を WorkingProjects/ に作成して起動 |
-| `cw resume` | Workspace 選択メニューを表示（どこからでも） |
-| `cw setup` | 現在のディレクトリを workspace としてセットアップ |
-| `cw launch [name]` | workspace の Claude Code を起動 |
-| `cw add-dir <path>` | ディレクトリを追加 |
-| `cw list` | workspace 一覧（最近使用順） |
-| `cw info` | 現在の workspace の詳細 |
-| `cw forget` | 現在の workspace をレジストリから削除 |
-| `cw update` | ソースから最新版をインストール (git pull + コピー) |
-| `cw help` | ヘルプ |
+```bash
+cw update
+```
+
+Runs `git pull` in the source directory and installs the latest libraries.
 
 ---
 
-## ファイル構成
+### Change language
+
+```bash
+cw lang ja    # Switch to Japanese
+cw lang en    # Switch to English
+```
+
+---
+
+## Command Reference
+
+| Command | Description |
+|---------|-------------|
+| `cw` | Launch if in Workspace, otherwise show menu |
+| `cw new [name]` | Create new Workspace in WorkingProjects/ |
+| `cw resume` | Show Workspace selection menu |
+| `cw setup` | Setup current directory as a Workspace |
+| `cw launch [name]` | Launch Claude Code for a Workspace |
+| `cw add-dir <path>` | Add a directory to current Workspace |
+| `cw list` | List Workspaces (sorted by last used) |
+| `cw info` | Show current Workspace details |
+| `cw forget` | Remove current Workspace from registry |
+| `cw scan` | Scan WorkingProjects/ for unregistered Workspaces |
+| `cw update` | Update from source (git pull + copy) |
+| `cw lang [en\|ja]` | Change display language |
+| `cw help` | Show help |
+
+---
+
+## File Structure
 
 ```
 ~/WorkingProjects/
 └── store360-refactor/
-    ├── .workspace.json     ← cw の設定ファイル
-    ├── CLAUDE.md           ← workspace コンテキスト (自動生成)
-    └── notes/              ← 作業メモ (任意)
+    ├── .workspace.json     ← cw configuration
+    ├── CLAUDE.md           ← workspace context (auto-generated)
+    └── notes/              ← notes (optional)
 
 ~/.claude-workspace/
-├── registry.json           ← 全 workspace のグローバルレジストリ
-└── lib/                    ← cw ライブラリ
+├── registry.json           ← global registry of all Workspaces
+├── source_path             ← source path for cw update
+├── lang                    ← language setting (en/ja)
+└── lib/                    ← cw libraries
 ```
 
-### .workspace.json の例
+### Example .workspace.json
 
 ```json
 {
   "name": "Store360 Refactor",
-  "description": "SDK monolith分解プロジェクト",
+  "description": "SDK monolith decomposition project",
   "workspace_path": "/Users/yuri/WorkingProjects/store360-refactor",
   "created_at": "2025-06-01T12:00:00Z",
   "dirs": [
@@ -209,7 +234,7 @@ cw forget
 }
 ```
 
-### registry.json の例
+### Example registry.json
 
 ```json
 {
@@ -226,9 +251,9 @@ cw forget
 
 ---
 
-## 環境変数
+## Environment Variables
 
-| 変数 | デフォルト | 説明 |
-|------|-----------|------|
-| `CW_HOME` | `~/.claude-workspace` | cw のデータディレクトリ |
-| `WORKING_PROJECTS_DIR` | `~/WorkingProjects` | `cw new` / `cw list` の基準ディレクトリ |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CW_HOME` | `~/.claude-workspace` | cw data directory |
+| `WORKING_PROJECTS_DIR` | `~/WorkingProjects` | Base directory for `cw new` / `cw list` |

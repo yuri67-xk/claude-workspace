@@ -8,6 +8,7 @@ CW_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)"
 
 # ライブラリ読み込み（依存関係の順序を保持）
 source "$CW_LIB_DIR/utils.sh"
+source "$CW_LIB_DIR/i18n.sh"
 source "$CW_LIB_DIR/registry.sh"
 source "$CW_LIB_DIR/setup.sh"
 source "$CW_LIB_DIR/launch.sh"
@@ -16,6 +17,7 @@ source "$CW_LIB_DIR/info.sh"
 source "$CW_LIB_DIR/new.sh"
 source "$CW_LIB_DIR/menu.sh"
 source "$CW_LIB_DIR/update.sh"
+source "$CW_LIB_DIR/lang.sh"
 
 usage() {
   cat <<EOF
@@ -34,6 +36,7 @@ $(bold "使い方:")
   cw forget             現在の workspace をレジストリから削除
   cw scan               WorkingProjects/ をスキャンして未登録 workspace を一括登録
   cw update             ソースから最新版をインストール (git pull + コピー)
+  cw lang [en|ja]       表示言語を変更 (default: en)
   cw version            バージョン表示
 
 $(bold "例:")
@@ -137,6 +140,7 @@ main() {
     forget)       cmd_forget ;;
     scan)         cmd_scan ;;
     update)       cmd_update ;;
+    lang)         cmd_lang "${@:2}" ;;
 
     # ──────────────────────────────
     # 既存コマンド
