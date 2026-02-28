@@ -114,7 +114,7 @@ t() {
         "setup_step4") echo "設定ファイルを生成" ;;
         "setup_step5") echo "CLAUDE.md を生成" ;;
         "setup_step6") echo "レジストリに登録" ;;
-        "setup_path_hint") echo "パスを入力して Enter。完了したら空 Enter。" ;;
+        "setup_path_hint") echo "fzf でディレクトリを選択 (fzf なしの場合はパスを入力)。完了したら空選択または Esc。" ;;
         "setup_run") echo "起動するには:" ;;
         "setup_claude_md") echo "Workspace CLAUDE.md を生成" ;;
         "setup_config_file") echo "設定ファイルを生成" ;;
@@ -266,7 +266,7 @@ t() {
         "setup_step4") echo "Generate configuration files" ;;
         "setup_step5") echo "Generate CLAUDE.md" ;;
         "setup_step6") echo "Register to registry" ;;
-        "setup_path_hint") echo "Enter path and press Enter. Press empty Enter when done." ;;
+        "setup_path_hint") echo "Select a directory with fzf (or type a path if fzf is unavailable). Press Esc or empty Enter when done." ;;
         "setup_run") echo "To launch:" ;;
         "setup_claude_md") echo "Generate workspace CLAUDE.md" ;;
         "setup_config_file") echo "Generate configuration file" ;;

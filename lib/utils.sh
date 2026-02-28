@@ -103,7 +103,7 @@ select_dir_with_fzf() {
     [[ -n "$result" ]] && result=$(expand_path "$result")
   else
     read -rep "  $prompt: " result
-    result=$(expand_path "$result")
+    [[ -n "$result" ]] && result=$(expand_path "$result")
   fi
 
   echo "$result"
