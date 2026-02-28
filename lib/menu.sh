@@ -347,16 +347,16 @@ _menu_submenu_pick() {
           2>/dev/null || true)
   else
     # Numbered submenu fallback (no fzf)
-    echo ""
-    echo "  $(bold "$ws_name")"
-    echo ""
-    echo "  1) $resume_label"
-    echo "  2) $add_dir_label"
-    echo "  3) $info_label"
-    echo "  4) $finder_label"
-    echo "  5) $forget_label"
-    echo "  6) $back_label"
-    echo ""
+    echo "" >&2
+    echo "  $(bold "$ws_name")" >&2
+    echo "" >&2
+    echo "  1) $resume_label" >&2
+    echo "  2) $add_dir_label" >&2
+    echo "  3) $info_label" >&2
+    echo "  4) $finder_label" >&2
+    echo "  5) $forget_label" >&2
+    echo "  6) $back_label" >&2
+    echo "" >&2
     local sub_choice
     read -rep "  Select [1-6]: " sub_choice
     case "$sub_choice" in
