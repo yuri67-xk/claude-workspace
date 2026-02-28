@@ -49,7 +49,7 @@ cmd_launch() {
       add_dir_flags+=("--add-dir" "$dir")
       local label="${role:-$(basename "$dir")}"
       info "  + $label  $(dim "$dir")"
-      ((valid_count++))
+      valid_count=$((valid_count + 1))
     else
       warn "  $(t "skip_not_exist"): $dir"
     fi
