@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# utils.sh - 共通ユーティリティ
+# utils.sh - Common utilities
 
 # ──────────────────────────────
-# カラー / スタイル
+# Colors / Styles
 # ──────────────────────────────
 bold()    { echo -e "\033[1m$*\033[0m"; }
 green()   { echo -e "\033[32m$*\033[0m"; }
@@ -18,7 +18,7 @@ error()   { echo "  $(red "✗") $*" >&2; }
 step()    { echo ""; echo "$(bold "→ $*")"; }
 
 # ──────────────────────────────
-# Workspace ファイルパス
+# Workspace file paths
 # ──────────────────────────────
 WORKSPACE_FILE=".workspace.json"
 WORKSPACE_CLAUDE_MD="CLAUDE.md"
@@ -33,23 +33,23 @@ is_workspace() {
 }
 
 # ──────────────────────────────
-# JSON 操作 (jq 必須)
+# JSON operations (jq required)
 # ──────────────────────────────
 require_jq() {
   if ! command -v jq &>/dev/null; then
-    error "jq が必要です: brew install jq"
+    error "$(t "error_jq_required")"
     exit 1
   fi
 }
 
-# workspace.json を読む
+# Read workspace.json
 ws_get() {
   local file="$1" key="$2"
   jq -r "$key" "$file" 2>/dev/null
 }
 
-# workspace.json を更新
-# 使い方: ws_set <file> [--arg key val ...] <filter>
+# Update workspace.json
+# Usage: ws_set <file> [--arg key val ...] <filter>
 ws_set() {
   local file="$1"
   shift
@@ -59,13 +59,13 @@ ws_set() {
 }
 
 # ──────────────────────────────
-# パス正規化
+# Path normalization
 # ──────────────────────────────
 normalize_path() {
   local path="$1"
-  # ~ を展開
+  # Expand ~
   path="${path/#\~/$HOME}"
-  # 末尾スラッシュ除去
+  # Remove trailing slash
   path="${path%/}"
   echo "$path"
 }
@@ -73,7 +73,7 @@ normalize_path() {
 expand_path() {
   local path
   path=$(normalize_path "$1")
-  # realpath があれば使う（なければそのまま）
+  # Use realpath if available (otherwise return as is)
   if command -v realpath &>/dev/null; then
     realpath -m "$path" 2>/dev/null || echo "$path"
   else
@@ -82,26 +82,26 @@ expand_path() {
 }
 
 # ──────────────────────────────
-# 相対時間表示（例: "3日前"）
-# 引数: <ISO8601 UTC タイムスタンプ>
+# Relative time display (e.g., "3 days ago")
+# Arguments: <ISO8601 UTC timestamp>
 # ──────────────────────────────
 _relative_time() {
   local ts="$1"
   [[ -z "$ts" ]] && echo "" && return
 
-  # ミリ秒部分を削除 (2025-06-01T12:00:00.123Z -> 2025-06-01T12:00:00Z)
+  # Remove milliseconds (2025-06-01T12:00:00.123Z -> 2025-06-01T12:00:00Z)
   ts="${ts%%.*}Z"
 
   local now
   now=$(date -u +%s 2>/dev/null || echo 0)
 
   local then=0
-  # macOS (BSD date) と Linux (GNU date) の両方に対応
-  # -u フラグで UTC として解釈（Z サフィックスを正しく扱うため）
+  # Support both macOS (BSD date) and Linux (GNU date)
+  # Use -u flag to interpret as UTC (handles Z suffix correctly)
   if then=$(date -u -j -f "%Y-%m-%dT%H:%M:%SZ" "$ts" +%s 2>/dev/null); then
-    : # macOS 成功
+    : # macOS success
   elif then=$(date -u -d "${ts}" +%s 2>/dev/null); then
-    : # Linux 成功
+    : # Linux success
   else
     echo "" && return
   fi

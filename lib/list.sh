@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# list.sh - cw list コマンド
+# list.sh - cw list command
 
 cmd_list() {
   require_jq
 
   echo ""
-  echo "$(bold "Workspace 一覧")"
+  echo "$(bold "$(t "workspace_list")")"
   echo ""
 
   # ──────────────────────────────
-  # グローバルレジストリから取得（優先）
+  # Get from global registry (priority)
   # ──────────────────────────────
   local ws_list
   ws_list=$(registry_list)
@@ -26,17 +26,17 @@ cmd_list() {
       path=$(echo "$ws" | jq -r '.path')
       last_used=$(echo "$ws" | jq -r '.last_used // ""')
 
-      # ディレクトリの存在確認
+      # Check directory exists
       local status_suffix=""
       if [[ ! -d "$path" ]]; then
-        status_suffix="  $(red "✗ パス不在")"
+        status_suffix="  $(red "✗ $(t "path_missing")")"
       fi
 
-      # 現在地マーカー
+      # Current location marker
       local marker=""
-      [[ "$path" == "$(pwd)" ]] && marker="  $(green "← 現在")"
+      [[ "$path" == "$(pwd)" ]] && marker="  $(green "← $(t "current_location")")"
 
-      # 相対時間
+      # Relative time
       local time_label=""
       if [[ -n "$last_used" ]]; then
         local rel
@@ -44,7 +44,7 @@ cmd_list() {
         [[ -n "$rel" ]] && time_label="  $(dim "$rel")"
       fi
 
-      # dirs 件数（.workspace.json が存在する場合）
+      # dirs count (if .workspace.json exists)
       local dir_count=0
       local ws_file="$path/$WORKSPACE_FILE"
       if [[ -f "$ws_file" ]]; then
@@ -52,7 +52,7 @@ cmd_list() {
       fi
 
       echo "  $(bold "$name")${marker}${status_suffix}${time_label}"
-      echo "  $(dim "$path")  [${dir_count} dirs]"
+      echo "  $(dim "$path")  [${dir_count} $(t "list_dirs")]"
       echo ""
       found_any=true
     done < <(echo "$ws_list" | jq -c '.[]')
@@ -61,13 +61,13 @@ cmd_list() {
       _list_empty_message
     fi
   else
-    # レジストリが空の場合はファイルシステムにフォールバック
+    # Registry empty, fallback to filesystem search
     _list_from_filesystem
   fi
 }
 
 # ──────────────────────────────
-# フォールバック: ファイルシステムから検索
+# Fallback: Search filesystem
 # ──────────────────────────────
 _list_from_filesystem() {
   local search_base="${WORKING_PROJECTS_DIR:-$HOME/WorkingProjects}"
@@ -83,11 +83,11 @@ _list_from_filesystem() {
     dir_count=$(jq '.dirs | length' "$ws_file")
 
     local marker=""
-    [[ "$ws_dir" == "$(pwd)" ]] && marker="  $(green "← 現在")"
+    [[ "$ws_dir" == "$(pwd)" ]] && marker="  $(green "← $(t "current_location")")"
 
     echo "  $(bold "$ws_name")${marker}"
     [[ -n "$ws_desc" ]] && echo "  $(dim "$ws_desc")"
-    echo "  $(dim "$ws_dir")  [${dir_count} dirs]"
+    echo "  $(dim "$ws_dir")  [${dir_count} $(t "list_dirs")]"
     echo ""
     found_any=true
   done < <(find "$search_base" -maxdepth 2 -name ".workspace.json" 2>/dev/null | sort)
@@ -98,6 +98,6 @@ _list_from_filesystem() {
 }
 
 _list_empty_message() {
-  info "Workspace が見つかりません"
-  echo "  $(dim "cw new で新規作成してください")"
+  info "$(t "workspace_not_found")"
+  echo "  $(dim "$(t "list_empty")")"
 }

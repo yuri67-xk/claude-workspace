@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# setup.sh - cw setup コマンド
+# setup.sh - cw setup command
 
-# 引数: [prefill_name]
-#   prefill_name ... cw new から呼ばれるとき、あらかじめ決まった Workspace 名を渡す
+# Arguments: [prefill_name]
+#   prefill_name ... passed when called from cw new to skip name input
 cmd_setup() {
   require_jq
 
@@ -11,94 +11,94 @@ cmd_setup() {
   local target_dir
   target_dir="$(pwd)"
 
-  # すでに workspace 設定済みか確認
+  # Check if already set up as workspace
   if is_workspace "$target_dir"; then
-    warn "このディレクトリはすでに workspace として設定済みです"
+    warn "$(t "workspace_already_setup")"
     local existing_name
     existing_name=$(ws_get "$target_dir/$WORKSPACE_FILE" '.name')
-    echo "  現在の workspace 名: $(bold "$existing_name")"
+    echo "  $(t "workspace_name"): $(bold "$existing_name")"
     echo ""
-    read -rp "  再設定しますか? [y/N]: " confirm
-    [[ "$confirm" =~ ^[Yy]$ ]] || { info "キャンセルしました"; exit 0; }
+    read -rp "  $(t "re_setup") [y/N]: " confirm
+    [[ "$confirm" =~ ^[Yy]$ ]] || { info "$(t "cancel")"; exit 0; }
     echo ""
   fi
 
   echo ""
-  echo "$(bold "Claude Workspace セットアップ")"
-  echo "$(dim "ディレクトリ: $target_dir")"
+  echo "$(bold "Claude Workspace Setup")"
+  echo "$(dim "$(t "directory"): $target_dir")"
   echo ""
 
   # ──────────────────────────────
-  # Step 1: プロジェクト名
+  # Step 1: Workspace name
   # ──────────────────────────────
-  step "Step 1: Workspace 名"
+  step "Step 1: $(t "setup_step1")"
   local ws_name
   if [[ -n "$prefill_name" ]]; then
-    # cw new から呼ばれた場合は名前入力済みなのでスキップ
+    # Called from cw new, name already set
     ws_name="$prefill_name"
-    success "Workspace 名: $ws_name"
+    success "$(t "workspace_name"): $ws_name"
   else
     local default_name
     default_name="$(basename "$target_dir")"
-    read -rp "  Workspace 名 [${default_name}]: " ws_name
+    read -rp "  $(t "workspace_name") [${default_name}]: " ws_name
     ws_name="${ws_name:-$default_name}"
-    success "Workspace 名: $ws_name"
+    success "$(t "workspace_name"): $ws_name"
   fi
 
   # ──────────────────────────────
-  # Step 2: 説明
+  # Step 2: Description
   # ──────────────────────────────
-  step "Step 2: Workspace の説明 (任意)"
-  read -rp "  説明: " ws_description
+  step "Step 2: $(t "setup_step2")"
+  read -rp "  $(t "workspace_desc"): " ws_description
   ws_description="${ws_description:-}"
 
   # ──────────────────────────────
-  # Step 3: プロジェクトディレクトリの指定
+  # Step 3: Add target directories
   # ──────────────────────────────
-  step "Step 3: 対象リポジトリ/ディレクトリの追加"
-  echo "  $(dim "パスを入力して Enter。追加完了したら空 Enter。")"
-  echo "  $(dim "例: ~/repos/store360-ios-sdk")"
+  step "Step 3: $(t "setup_step3")"
+  echo "  $(dim "$(t "setup_path_hint")")"
+  echo "  $(dim "Example: ~/repos/my-project")"
   echo ""
 
   local dirs=()
   local dir_roles=()
 
   while true; do
-    read -rp "  パス (空 Enter で完了): " raw_path
+    read -rp "  $(t "path") (empty Enter to finish): " raw_path
     [[ -z "$raw_path" ]] && break
 
     local expanded_path
     expanded_path=$(expand_path "$raw_path")
 
     if [[ ! -d "$expanded_path" ]]; then
-      warn "ディレクトリが存在しません: $expanded_path"
-      read -rp "  それでも追加しますか? [y/N]: " force
+      warn "$(t "dir_not_found"): $expanded_path"
+      read -rp "  $(t "add_anyway") [y/N]: " force
       [[ "$force" =~ ^[Yy]$ ]] || continue
     fi
 
-    # このディレクトリの役割（任意）
-    read -rp "  役割ラベル (任意, 例: iOS SDK): " role
+    # Role label (optional)
+    read -rp "  $(t "dir_add_role"): " role
     role="${role:-}"
 
     dirs+=("$expanded_path")
     dir_roles+=("$role")
-    success "追加: $expanded_path $([ -n "$role" ] && echo "(${role})")"
+    success "$(t "dir_added"): $expanded_path $([ -n "$role" ] && echo "(${role})")"
   done
 
   if [[ ${#dirs[@]} -eq 0 ]]; then
-    warn "ディレクトリが指定されていません。後で cw add-dir で追加できます。"
+    warn "No directories specified. Use cw add-dir later to add."
   fi
 
   # ──────────────────────────────
-  # Step 4: workspace.json 生成
+  # Step 4: Generate workspace.json
   # ──────────────────────────────
-  step "Step 4: 設定ファイルを生成"
+  step "Step 4: $(t "setup_step4")"
 
   local ws_file="$target_dir/$WORKSPACE_FILE"
   local created_at
   created_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-  # JSON 構築
+  # Build JSON
   local dirs_json="[]"
   for i in "${!dirs[@]}"; do
     local dir="${dirs[$i]}"
@@ -123,46 +123,46 @@ cmd_setup() {
       dirs: $dirs
     }' > "$ws_file"
 
-  success "生成: $ws_file"
+  success "$(t "created"): $ws_file"
 
   # ──────────────────────────────
-  # Step 5: CLAUDE.md 生成
+  # Step 5: Generate CLAUDE.md
   # ──────────────────────────────
-  step "Step 5: Workspace CLAUDE.md を生成"
+  step "Step 5: $(t "setup_step5")"
 
   local claude_md="$target_dir/$WORKSPACE_CLAUDE_MD"
   _generate_workspace_claude_md "$claude_md" "$ws_name" "$ws_description" "$ws_file"
-  success "生成: $claude_md"
+  success "$(t "created"): $claude_md"
 
   # ──────────────────────────────
-  # Step 6: グローバルレジストリに登録
+  # Step 6: Register to global registry
   # ──────────────────────────────
-  step "Step 6: レジストリに登録"
+  step "Step 6: $(t "setup_step6")"
   registry_add "$ws_name" "$target_dir"
-  success "登録完了: ~/.claude-workspace/registry.json"
+  success "$(t "registered"): ~/.claude-workspace/registry.json"
 
   # ──────────────────────────────
-  # 完了
+  # Complete
   # ──────────────────────────────
   echo ""
   echo "$(green "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")"
-  echo "$(green "  セットアップ完了!")"
+  echo "$(green "  $(t "setup_complete")")"
   echo "$(green "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")"
   echo ""
-  echo "  起動するには:"
+  echo "  $(t "setup_run")"
   echo "  $(bold "  cw")"
   echo ""
 }
 
-# workspace CLAUDE.md テンプレート生成
-# 引数: <claude_md_path> <ws_name> <ws_description> <ws_file_path>
+# Generate workspace CLAUDE.md template
+# Arguments: <claude_md_path> <ws_name> <ws_description> <ws_file_path>
 _generate_workspace_claude_md() {
   local claude_md="$1"
   local ws_name="$2"
   local ws_description="$3"
   local ws_file="$4"
 
-  # Linked Repositories テーブル行を構築
+  # Build Linked Repositories table rows
   local dirs_table=""
   if [[ -f "$ws_file" ]]; then
     local count
@@ -179,22 +179,21 @@ _generate_workspace_claude_md() {
   local created_at
   created_at=$(date "+%Y-%m-%d")
 
-  # ${ws_name,,} は bash 4+ の構文のため macOS bash 3.2 では動かない
-  # tr で代替する
+  # ${ws_name,,} requires bash 4+, use tr for macOS bash 3.2 compatibility
   local ws_name_lower
   ws_name_lower=$(echo "$ws_name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
 
-  # printf でファイル生成（heredoc の変数展開トラブルを回避）
-  printf '# Workspace: %s\n\n> %s\n\nCreated: %s\n\n---\n\n## Linked Repositories\n\n| Role | Path |\n|------|------|\n%s\n## Workflow Rules\n\n- 追加のルールをここに記述してください\n- （例）各 repo のブランチ命名規則: `feature/ws-%s-*`\n\n## Current Tasks\n\n- [ ] タスク1\n- [ ] タスク2\n\n## Notes\n\n作業メモや設計決定事項をここに記録してください。\n' \
+  # Use printf to avoid heredoc variable expansion issues
+  printf '# Workspace: %s\n\n> %s\n\nCreated: %s\n\n---\n\n## Linked Repositories\n\n| Role | Path |\n|------|------|\n%s\n## Workflow Rules\n\n- Add additional rules here\n- (Example) Branch naming convention: `feature/ws-%s-*`\n\n## Current Tasks\n\n- [ ] Task 1\n- [ ] Task 2\n\n## Notes\n\nRecord notes and design decisions here.\n' \
     "$ws_name" \
-    "${ws_description:-このワークスペースの説明を記述してください。}" \
+    "${ws_description:-Describe this workspace here.}" \
     "$created_at" \
     "$dirs_table" \
     "$ws_name_lower" \
     > "$claude_md"
 }
 
-# cw add-dir コマンド
+# cw add-dir command
 cmd_add_dir() {
   require_jq
 
@@ -202,7 +201,7 @@ cmd_add_dir() {
   target_dir="$(pwd)"
 
   if ! is_workspace "$target_dir"; then
-    error "workspace が見つかりません。先に cw setup を実行してください。"
+    error "$(t "workspace_not_found"). Run cw setup first."
     exit 1
   fi
 
@@ -211,42 +210,42 @@ cmd_add_dir() {
   ws_name=$(ws_get "$ws_file" '.name')
 
   echo ""
-  echo "$(bold "ディレクトリを追加: $ws_name")"
+  echo "$(bold "$(t "add_directory"): $ws_name")"
   echo ""
 
   local new_path="${1:-}"
   if [[ -z "$new_path" ]]; then
-    read -rp "  追加するパス: " new_path
+    read -rp "  $(t "dir_add_path"): " new_path
   fi
 
   local expanded_path
   expanded_path=$(expand_path "$new_path")
 
   if [[ ! -d "$expanded_path" ]]; then
-    warn "ディレクトリが存在しません: $expanded_path"
-    read -rp "  それでも追加しますか? [y/N]: " force
+    warn "$(t "dir_not_found"): $expanded_path"
+    read -rp "  $(t "add_anyway") [y/N]: " force
     [[ "$force" =~ ^[Yy]$ ]] || exit 0
   fi
 
-  # すでに登録済みか確認
+  # Check if already registered
   if jq -e --arg p "$expanded_path" '.dirs[] | select(.path == $p)' "$ws_file" &>/dev/null; then
-    warn "すでに登録済みです: $expanded_path"
+    warn "$(t "already_exists"): $expanded_path"
     exit 0
   fi
 
-  read -rp "  役割ラベル (任意): " role
+  read -rp "  $(t "dir_add_role"): " role
 
-  # workspace.json に追加
+  # Add to workspace.json
   ws_set "$ws_file" \
     --arg path "$expanded_path" \
     --arg role "${role:-}" \
     '.dirs += [{"path": $path, "role": $role}]'
 
-  # CLAUDE.md 更新（Linked Repositories テーブル再生成）
+  # Update CLAUDE.md (regenerate Linked Repositories table)
   local claude_md="$target_dir/$WORKSPACE_CLAUDE_MD"
   local ws_description
   ws_description=$(ws_get "$ws_file" '.description')
   _generate_workspace_claude_md "$claude_md" "$ws_name" "$ws_description" "$ws_file"
 
-  success "追加しました: $expanded_path"
+  success "$(t "dir_added"): $expanded_path"
 }

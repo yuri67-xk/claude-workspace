@@ -6,7 +6,7 @@ CW_VERSION="0.2.0"
 CW_DIR="${CW_HOME:-$HOME/.claude-workspace}"
 CW_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)"
 
-# ライブラリ読み込み（依存関係の順序を保持）
+# Load libraries (order matters for dependencies)
 source "$CW_LIB_DIR/utils.sh"
 source "$CW_LIB_DIR/i18n.sh"
 source "$CW_LIB_DIR/registry.sh"
@@ -22,44 +22,44 @@ source "$CW_LIB_DIR/lang.sh"
 usage() {
   cat <<EOF
 $(bold "claude-workspace (cw)") v${CW_VERSION}
-Claude Code マルチリポジトリ Workspace マネージャー
+$(t "usage_title")
 
-$(bold "使い方:")
-  cw                    Workspace なら即起動、なければメニューを表示
-  cw new [name]         新規 Workspace を作成して起動
-  cw resume             Workspace 選択メニューを表示
-  cw setup              現在のディレクトリを workspace としてセットアップ
-  cw launch [name]      workspace を起動 (Claude Code を --add-dir 付きで起動)
-  cw list               登録済み workspace 一覧
-  cw info [name]        workspace の詳細情報
-  cw add-dir <path>     既存 workspace にディレクトリを追加
-  cw forget             現在の workspace をレジストリから削除
-  cw scan               WorkingProjects/ をスキャンして未登録 workspace を一括登録
-  cw update             ソースから最新版をインストール (git pull + コピー)
-  cw lang [en|ja]       表示言語を変更 (default: en)
-  cw version            バージョン表示
+$(bold "$(t "usage"):")
+  cw                    $(t "usage_launch_or_menu")
+  cw new [name]         $(t "usage_new")
+  cw resume             $(t "usage_resume")
+  cw setup              $(t "usage_setup")
+  cw launch [name]      $(t "usage_launch")
+  cw list               $(t "usage_list")
+  cw info [name]        $(t "usage_info")
+  cw add-dir <path>     $(t "usage_add_dir")
+  cw forget             $(t "usage_forget")
+  cw scan               $(t "usage_scan")
+  cw update             $(t "usage_update")
+  cw lang [en|ja]       $(t "usage_lang")
+  cw version            $(t "usage_version")
 
-$(bold "例:")
-  cw                    # どこからでも OK: 起動 or メニュー
-  cw new store360       # ~/WorkingProjects/store360/ を作成してセットアップ
-  cw resume             # 既存 workspace を選んで再開
-  cw launch Store360    # 名前指定で起動
+$(bold "$(t "usage_examples"):")
+  cw                    # $(t "example_anywhere")
+  cw new store360       # ~/WorkingProjects/store360/ $(t "example_create_setup")
+  cw resume             # $(t "usage_resume")
+  cw launch Store360    # Launch by name
 EOF
 }
 
-# WorkingProjects/ をスキャンして未登録 workspace を一括登録
+# Scan WorkingProjects/ for unregistered workspaces
 cmd_scan() {
   require_jq
 
   local search_base="${WORKING_PROJECTS_DIR:-$HOME/WorkingProjects}"
 
   echo ""
-  echo "$(bold "Workspace スキャン")"
-  echo "  $(dim "検索: $search_base")"
+  echo "$(bold "$(t "workspace_scan")")"
+  echo "  $(dim "$(t "search"): $search_base")"
   echo ""
 
   if [[ ! -d "$search_base" ]]; then
-    warn "ディレクトリが見つかりません: $search_base"
+    warn "$(t "directory") $(t "not_found"): $search_base"
     exit 0
   fi
 
@@ -72,34 +72,34 @@ cmd_scan() {
     ws_name=$(ws_get "$ws_file" '.name')
     found=$((found + 1))
 
-    # すでにレジストリにあるか確認
+    # Check if already in registry
     local existing
     existing=$(registry_get_by_name "$ws_name")
 
     if [[ -n "$existing" && "$existing" == "$ws_dir" ]]; then
-      info "スキップ (登録済み): $ws_name"
+      info "$(t "skip") ($(t "registered")): $ws_name"
     else
       registry_add "$ws_name" "$ws_dir"
-      success "登録: $ws_name  $(dim "$ws_dir")"
+      success "$(t "register"): $ws_name  $(dim "$ws_dir")"
       registered=$((registered + 1))
     fi
   done < <(find "$search_base" -maxdepth 2 -name ".workspace.json" 2>/dev/null | sort)
 
   echo ""
   if [[ $found -eq 0 ]]; then
-    info "Workspace が見つかりませんでした"
+    info "$(t "workspace_not_found")"
   else
-    info "${found} 件のうち ${registered} 件を新規登録しました"
+    info "${found} $(t "files") - ${registered} $(t "newly_registered")"
   fi
 }
 
-# レジストリから現在ディレクトリの workspace を削除
+# Remove current directory's workspace from registry
 cmd_forget() {
   local target_dir
   target_dir="$(pwd)"
 
   if ! is_workspace "$target_dir"; then
-    error "現在のディレクトリは workspace ではありません"
+    error "$(t "not_a_workspace")"
     exit 1
   fi
 
@@ -107,14 +107,14 @@ cmd_forget() {
   ws_name=$(ws_get "$target_dir/$WORKSPACE_FILE" '.name')
 
   echo ""
-  warn "「${ws_name}」をレジストリから削除します"
-  echo "  $(dim "※ ファイル (.workspace.json, CLAUDE.md) は削除されません")"
+  warn "「${ws_name}」$(t "remove_from_registry")"
+  echo "  $(dim "$(t "files_remain")")"
   echo ""
-  read -rp "  続けますか? [y/N]: " confirm
-  [[ "$confirm" =~ ^[Yy]$ ]] || { info "キャンセルしました"; exit 0; }
+  read -rp "  $(t "continue") [y/N]: " confirm
+  [[ "$confirm" =~ ^[Yy]$ ]] || { info "$(t "cancel")"; exit 0; }
 
   registry_remove "$target_dir"
-  success "レジストリから削除しました: $ws_name"
+  success "$(t "deleted"): $ws_name"
 }
 
 main() {
@@ -122,7 +122,7 @@ main() {
 
   case "$cmd" in
     # ──────────────────────────────
-    # スマート起動: workspace なら即起動、なければメニュー
+    # Smart launch: launch if in workspace, otherwise show menu
     # ──────────────────────────────
     "")
       if is_workspace "$(pwd)"; then
@@ -133,7 +133,7 @@ main() {
       ;;
 
     # ──────────────────────────────
-    # 新機能
+    # Commands
     # ──────────────────────────────
     new|n)        cmd_new "${@:2}" ;;
     resume|r)     cmd_menu ;;
@@ -143,7 +143,7 @@ main() {
     lang)         cmd_lang "${@:2}" ;;
 
     # ──────────────────────────────
-    # 既存コマンド
+    # Standard commands
     # ──────────────────────────────
     setup)        cmd_setup "${@:2}" ;;
     launch)       cmd_launch "${@:2}" ;;
@@ -154,7 +154,7 @@ main() {
     help|-h|--help) usage ;;
 
     *)
-      error "不明なコマンド: $cmd"
+      error "$(t "invalid_command"): $cmd"
       echo ""
       usage
       exit 1
