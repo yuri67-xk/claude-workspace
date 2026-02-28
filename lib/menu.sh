@@ -1,14 +1,20 @@
 #!/usr/bin/env bash
-# menu.sh - Interactive Workspace selection menu (fzf + preview + sub-menu)
+# menu.sh - Interactive Workspace selection menu
 
-cmd_menu() {
-  require_jq
+# Module-level arrays (no nameref needed, bash 3.2 compatible)
+_CW_MENU_PATHS=()
+_CW_MENU_NAMES=()
+_CW_MENU_TIMES=()
+_CW_MENU_REGISTERED=()
 
-  # Build workspace list (registry first, then filesystem)
-  local menu_paths=()
-  local menu_names=()
-  local menu_times=()
-  local menu_registered=()
+# ──────────────────────────────
+# Build workspace list into module arrays
+# ──────────────────────────────
+_cw_menu_build_list() {
+  _CW_MENU_PATHS=()
+  _CW_MENU_NAMES=()
+  _CW_MENU_TIMES=()
+  _CW_MENU_REGISTERED=()
 
   local ws_list
   ws_list=$(registry_list)
@@ -18,10 +24,10 @@ cmd_menu() {
     name=$(echo "$ws" | jq -r '.name')
     path=$(echo "$ws" | jq -r '.path')
     last_used=$(echo "$ws" | jq -r '.last_used // ""')
-    menu_paths+=("$path")
-    menu_names+=("$name")
-    menu_times+=("$last_used")
-    menu_registered+=("true")
+    _CW_MENU_PATHS+=("$path")
+    _CW_MENU_NAMES+=("$name")
+    _CW_MENU_TIMES+=("$last_used")
+    _CW_MENU_REGISTERED+=("true")
   done < <(echo "$ws_list" | jq -c '.[]' 2>/dev/null)
 
   local search_base="${WORKING_PROJECTS_DIR:-$HOME/WorkingProjects}"
@@ -31,43 +37,122 @@ cmd_menu() {
       ws_dir=$(dirname "$ws_file")
       ws_name=$(ws_get "$ws_file" '.name')
       local already=false
-      for p in "${menu_paths[@]+"${menu_paths[@]}"}"; do
+      local p
+      for p in "${_CW_MENU_PATHS[@]+"${_CW_MENU_PATHS[@]}"}"; do
         [[ "$p" == "$ws_dir" ]] && already=true && break
       done
       $already && continue
-      menu_paths+=("$ws_dir")
-      menu_names+=("$ws_name")
-      menu_times+=("")
-      menu_registered+=("false")
+      _CW_MENU_PATHS+=("$ws_dir")
+      _CW_MENU_NAMES+=("$ws_name")
+      _CW_MENU_TIMES+=("")
+      _CW_MENU_REGISTERED+=("false")
     done < <(find "$search_base" -maxdepth 2 -name ".workspace.json" 2>/dev/null | sort)
-  fi
-
-  if command -v fzf &>/dev/null; then
-    _menu_fzf menu_paths menu_names menu_times menu_registered
-  else
-    _menu_numbered menu_paths menu_names menu_times menu_registered
   fi
 }
 
 # ──────────────────────────────
-# fzf main menu with preview
+# Main entry point
 # ──────────────────────────────
-_menu_fzf() {
-  local -n _paths=$1
-  local -n _names=$2
-  local -n _times=$3
-  local -n _registered=$4
+cmd_menu() {
+  require_jq
+  _cw_menu_build_list
 
+  while true; do
+    local selected_path
+    if command -v fzf &>/dev/null; then
+      selected_path=$(_menu_fzf_pick)
+    else
+      selected_path=$(_menu_numbered_pick)
+    fi
+
+    # Empty = Esc/quit
+    if [[ -z "$selected_path" ]]; then
+      echo ""
+      info "$(t "cmd_quit")"
+      return 0
+    fi
+
+    # Create new workspace
+    if [[ "$selected_path" == "CREATE_NEW" ]]; then
+      cmd_new
+      return
+    fi
+
+    # Auto-register if unregistered
+    local idx
+    for idx in "${!_CW_MENU_PATHS[@]}"; do
+      if [[ "${_CW_MENU_PATHS[$idx]}" == "$selected_path" ]]; then
+        if [[ "${_CW_MENU_REGISTERED[$idx]}" == "false" ]]; then
+          registry_add "${_CW_MENU_NAMES[$idx]}" "$selected_path"
+          success "$(t "registered"): ${_CW_MENU_NAMES[$idx]}"
+        fi
+        break
+      fi
+    done
+
+    if [[ ! -d "$selected_path" ]]; then
+      error "$(t "dir_not_found"): $selected_path"
+      continue
+    fi
+
+    local ws_name
+    ws_name=$(jq -r '.name' "${selected_path}/${WORKSPACE_FILE}" 2>/dev/null)
+
+    # Show submenu and handle result
+    local submenu_result
+    submenu_result=$(_menu_submenu_pick "$selected_path" "$ws_name")
+
+    case "$submenu_result" in
+      LAUNCH)
+        cd "$selected_path"
+        cmd_launch
+        return
+        ;;
+      ADD_DIR)
+        (cd "$selected_path" && cmd_add_dir) || true
+        _cw_menu_build_list
+        # Re-show submenu after add-dir
+        submenu_result=$(_menu_submenu_pick "$selected_path" "$ws_name")
+        [[ "$submenu_result" == "LAUNCH" ]] && { cd "$selected_path"; cmd_launch; return; }
+        continue
+        ;;
+      INFO)
+        (cd "$selected_path" && cmd_info) || true
+        echo ""
+        read -rp "  $(t "press_enter"): " _
+        continue
+        ;;
+      FINDER)
+        open "$selected_path"
+        continue
+        ;;
+      FORGET)
+        _menu_forget "$selected_path" "$ws_name"
+        _cw_menu_build_list
+        continue
+        ;;
+      *)
+        # BACK or empty — loop back to main list
+        continue
+        ;;
+    esac
+  done
+}
+
+# ──────────────────────────────
+# fzf picker: returns selected PATH or CREATE_NEW or empty string
+# ──────────────────────────────
+_menu_fzf_pick() {
   # Build tab-separated fzf input: PATH\tDISPLAY
   local fzf_entries=""
   fzf_entries+=$'CREATE_NEW\t'"$(t "menu_create_new")"$'\n'
 
   local idx
-  for idx in "${!_paths[@]}"; do
-    local path="${_paths[$idx]}"
-    local name="${_names[$idx]}"
-    local last_used="${_times[$idx]}"
-    local reg="${_registered[$idx]}"
+  for idx in "${!_CW_MENU_PATHS[@]}"; do
+    local path="${_CW_MENU_PATHS[$idx]}"
+    local name="${_CW_MENU_NAMES[$idx]}"
+    local last_used="${_CW_MENU_TIMES[$idx]}"
+    local reg="${_CW_MENU_REGISTERED[$idx]}"
 
     local time_label=""
     if [[ -n "$last_used" ]]; then
@@ -76,16 +161,14 @@ _menu_fzf() {
       [[ -n "$rel" ]] && time_label="  $(dim "$rel")"
     fi
 
-    local unreg_label=""
-    [[ "$reg" == "false" ]] && unreg_label="  $(yellow "[unregistered]")"
+    local extra_label=""
+    [[ "$reg" == "false" ]] && extra_label+="  $(yellow "[unregistered]")"
+    [[ ! -d "$path" ]] && extra_label+="  $(red "[missing]")"
 
-    local status_label=""
-    [[ ! -d "$path" ]] && status_label="  $(red "[missing]")"
-
-    fzf_entries+="${path}"$'\t'"${name}${time_label}${unreg_label}${status_label}"$'\n'
+    fzf_entries+="${path}"$'\t'"${name}${time_label}${extra_label}"$'\n'
   done
 
-  # Preview script (reads {1}/.workspace.json via jq)
+  # Preview script (no bash vars — uses fzf {1} placeholder)
   local preview_script
   preview_script=$(cat <<'PREVIEW'
 ws_path={1}
@@ -139,140 +222,32 @@ PREVIEW
         --prompt='  Workspace > ' \
         2>/dev/null || true)
 
-  [[ -z "$selected" ]] && { echo ""; info "$(t "cmd_quit")"; return 0; }
+  [[ -z "$selected" ]] && echo "" && return 0
 
-  local selected_path
-  selected_path=$(printf '%s' "$selected" | cut -f1)
-
-  if [[ "$selected_path" == "CREATE_NEW" ]]; then
-    cmd_new
-    return
-  fi
-
-  # Auto-register unregistered workspaces
-  for idx in "${!_paths[@]}"; do
-    if [[ "${_paths[$idx]}" == "$selected_path" ]]; then
-      if [[ "${_registered[$idx]}" == "false" ]]; then
-        local sel_name="${_names[$idx]}"
-        registry_add "$sel_name" "$selected_path"
-        success "$(t "registered"): $sel_name"
-      fi
-      break
-    fi
-  done
-
-  if [[ ! -d "$selected_path" ]]; then
-    error "$(t "dir_not_found"): $selected_path"
-    exit 1
-  fi
-
-  local selected_name
-  selected_name=$(jq -r '.name' "${selected_path}/${WORKSPACE_FILE}" 2>/dev/null)
-
-  _menu_submenu "$selected_path" "$selected_name"
+  # Return the PATH (field 1, before the tab)
+  printf '%s' "$selected" | cut -f1
 }
 
 # ──────────────────────────────
-# Action picker for selected workspace
+# Numbered picker (no fzf): returns selected PATH or CREATE_NEW or empty
 # ──────────────────────────────
-_menu_submenu() {
-  local ws_path="$1"
-  local ws_name="$2"
-
-  local resume_label add_dir_label info_label finder_label forget_label back_label
-  resume_label=$(t "menu_action_resume")
-  add_dir_label=$(t "menu_action_add_dir")
-  info_label=$(t "menu_action_info")
-  finder_label=$(t "menu_action_finder")
-  forget_label=$(t "menu_action_forget")
-  back_label=$(t "menu_action_back")
-
-  local action
-  action=$(printf '%s\n' \
-    "$resume_label" \
-    "$add_dir_label" \
-    "$info_label" \
-    "$finder_label" \
-    "$forget_label" \
-    "$back_label" | \
-    fzf --height=40% --border \
-        --header="  $ws_name" \
-        --header-first \
-        --prompt='  Action > ' \
-        2>/dev/null || true)
-
-  [[ -z "$action" ]] && { cmd_menu; return; }
-
-  if [[ "$action" == "$resume_label" ]]; then
-    cd "$ws_path"
-    cmd_launch
-
-  elif [[ "$action" == "$add_dir_label" ]]; then
-    cd "$ws_path"
-    cmd_add_dir
-    _menu_submenu "$ws_path" "$ws_name"
-
-  elif [[ "$action" == "$info_label" ]]; then
-    cd "$ws_path"
-    cmd_info
-    echo ""
-    read -rp "  $(t "press_enter"): " _ignored
-    _menu_submenu "$ws_path" "$ws_name"
-
-  elif [[ "$action" == "$finder_label" ]]; then
-    open "$ws_path"
-    _menu_submenu "$ws_path" "$ws_name"
-
-  elif [[ "$action" == "$forget_label" ]]; then
-    _menu_forget "$ws_path" "$ws_name"
-
-  elif [[ "$action" == "$back_label" ]]; then
-    cmd_menu
-  fi
-}
-
-# ──────────────────────────────
-# Forget workspace (without pwd dependency)
-# ──────────────────────────────
-_menu_forget() {
-  local ws_path="$1"
-  local ws_name="$2"
-
-  echo ""
-  warn "\"${ws_name}\" $(t "remove_from_registry")"
-  echo "  $(dim "$(t "files_remain")")"
-  echo ""
-  read -rp "  $(t "continue") [y/N]: " confirm
-  if [[ "$confirm" =~ ^[Yy]$ ]]; then
-    registry_remove "$ws_path"
-    success "$(t "deleted"): $ws_name"
-    echo ""
-  else
-    info "$(t "cancel")"
-  fi
-  cmd_menu
-}
-
-# ──────────────────────────────
-# Numbered fallback (when fzf is unavailable)
-# ──────────────────────────────
-_menu_numbered() {
-  local -n _paths=$1
-  local -n _names=$2
-  local -n _times=$3
-  local -n _registered=$4
-
+_menu_numbered_pick() {
   echo ""
   echo "$(bold "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")"
   echo "$(bold "  claude-workspace (cw)")"
   echo "$(bold "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")"
 
-  if [[ ${#_paths[@]} -eq 0 ]]; then
+  if [[ ${#_CW_MENU_PATHS[@]} -eq 0 ]]; then
     echo ""
     info "$(t "workspace_not_found")"
     echo ""
-    _menu_prompt_new
-    return
+    read -rep "  $(t "new_workspace")? [Y/n]: " ans
+    if [[ ! "$ans" =~ ^[Nn]$ ]]; then
+      echo "CREATE_NEW"
+    else
+      echo ""
+    fi
+    return 0
   fi
 
   echo ""
@@ -280,11 +255,12 @@ _menu_numbered() {
   echo ""
 
   local i=0
-  for idx in "${!_paths[@]}"; do
-    local path="${_paths[$idx]}"
-    local name="${_names[$idx]}"
-    local last_used="${_times[$idx]}"
-    local registered="${_registered[$idx]}"
+  local idx
+  for idx in "${!_CW_MENU_PATHS[@]}"; do
+    local path="${_CW_MENU_PATHS[$idx]}"
+    local name="${_CW_MENU_NAMES[$idx]}"
+    local last_used="${_CW_MENU_TIMES[$idx]}"
+    local registered="${_CW_MENU_REGISTERED[$idx]}"
     i=$((i + 1))
 
     local status_marker=""
@@ -319,42 +295,114 @@ _menu_numbered() {
   echo ""
 
   case "$choice" in
-    [Nn]) cmd_new ;;
-    [Qq]|"") info "$(t "cmd_quit")"; exit 0 ;;
+    [Nn])
+      echo "CREATE_NEW"
+      ;;
+    [Qq]|"")
+      echo ""
+      ;;
     *)
       if [[ "$choice" =~ ^[0-9]+$ ]] && \
          [[ $choice -ge 1 ]] && \
-         [[ $choice -le ${#_paths[@]} ]]; then
-
+         [[ $choice -le ${#_CW_MENU_PATHS[@]} ]]; then
         local sel_idx=$(( choice - 1 ))
-        local selected_path="${_paths[$sel_idx]}"
-        local selected_name="${_names[$sel_idx]}"
-        local selected_reg="${_registered[$sel_idx]}"
-
-        if [[ ! -d "$selected_path" ]]; then
-          error "$(t "dir_not_found"): $selected_path"
-          exit 1
-        fi
-
-        if [[ "$selected_reg" == "false" ]]; then
-          registry_add "$selected_name" "$selected_path"
-          success "$(t "registered"): $selected_name"
-        fi
-
-        _menu_submenu "$selected_path" "$selected_name"
+        echo "${_CW_MENU_PATHS[$sel_idx]}"
       else
         error "$(t "invalid"): $choice"
-        exit 1
+        echo ""
       fi
       ;;
   esac
 }
 
 # ──────────────────────────────
-# Prompt to create new (when 0 workspaces)
+# Submenu picker: returns action code
+# Returns: LAUNCH, ADD_DIR, INFO, FINDER, FORGET, BACK, or empty
 # ──────────────────────────────
-_menu_prompt_new() {
-  read -rep "  $(t "new_workspace")? [Y/n]: " ans
-  [[ "$ans" =~ ^[Nn]$ ]] && exit 0
-  cmd_new
+_menu_submenu_pick() {
+  local ws_path="$1"
+  local ws_name="$2"
+
+  local resume_label add_dir_label info_label finder_label forget_label back_label
+  resume_label=$(t "menu_action_resume")
+  add_dir_label=$(t "menu_action_add_dir")
+  info_label=$(t "menu_action_info")
+  finder_label=$(t "menu_action_finder")
+  forget_label=$(t "menu_action_forget")
+  back_label=$(t "menu_action_back")
+
+  local action
+  if command -v fzf &>/dev/null; then
+    action=$(printf '%s\n' \
+      "$resume_label" \
+      "$add_dir_label" \
+      "$info_label" \
+      "$finder_label" \
+      "$forget_label" \
+      "$back_label" | \
+      fzf --height=40% --border \
+          --header="  $ws_name" \
+          --header-first \
+          --prompt='  Action > ' \
+          2>/dev/null || true)
+  else
+    # Numbered submenu fallback (no fzf)
+    echo ""
+    echo "  $(bold "$ws_name")"
+    echo ""
+    echo "  1) $resume_label"
+    echo "  2) $add_dir_label"
+    echo "  3) $info_label"
+    echo "  4) $finder_label"
+    echo "  5) $forget_label"
+    echo "  6) $back_label"
+    echo ""
+    local sub_choice
+    read -rep "  Select [1-6]: " sub_choice
+    case "$sub_choice" in
+      1) action="$resume_label" ;;
+      2) action="$add_dir_label" ;;
+      3) action="$info_label" ;;
+      4) action="$finder_label" ;;
+      5) action="$forget_label" ;;
+      *) action="$back_label" ;;
+    esac
+  fi
+
+  if [[ -z "$action" ]] || [[ "$action" == "$back_label" ]]; then
+    echo "BACK"
+  elif [[ "$action" == "$resume_label" ]]; then
+    echo "LAUNCH"
+  elif [[ "$action" == "$add_dir_label" ]]; then
+    echo "ADD_DIR"
+  elif [[ "$action" == "$info_label" ]]; then
+    echo "INFO"
+  elif [[ "$action" == "$finder_label" ]]; then
+    echo "FINDER"
+  elif [[ "$action" == "$forget_label" ]]; then
+    echo "FORGET"
+  else
+    echo "BACK"
+  fi
+}
+
+# ──────────────────────────────
+# Forget workspace (no pwd dependency)
+# ──────────────────────────────
+_menu_forget() {
+  local ws_path="$1"
+  local ws_name="$2"
+
+  echo ""
+  warn "\"${ws_name}\" $(t "remove_from_registry")"
+  echo "  $(dim "$(t "files_remain")")"
+  echo ""
+  read -rp "  $(t "continue") [y/N]: " confirm
+  if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    registry_remove "$ws_path"
+    success "$(t "deleted"): $ws_name"
+    echo ""
+  else
+    info "$(t "cancel")"
+  fi
 }
