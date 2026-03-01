@@ -197,6 +197,14 @@ t() {
         "example_anywhere") echo "どこからでも OK: 起動 or メニュー" ;;
         "example_create_setup") echo "を作成してセットアップ" ;;
 
+        # === Web UI ===
+        "usage_web") echo "ローカル Web UI を起動" ;;
+        "web_python_required") echo "Python 3 が必要です" ;;
+        "web_checking_deps") echo "依存関係を確認しています" ;;
+        "web_pip_failed") echo "pip install に失敗しました" ;;
+        "web_starting") echo "Web UI を起動しました →" ;;
+        "web_stop_hint") echo "Ctrl+C で停止" ;;
+
         *) echo "$key" ;;
       esac
       ;;
@@ -367,6 +375,14 @@ t() {
         "usage_version") echo "Show version" ;;
         "example_anywhere") echo "From anywhere: launch or menu" ;;
         "example_create_setup") echo "create and setup" ;;
+
+        # === Web UI ===
+        "usage_web") echo "launch local Web UI server" ;;
+        "web_python_required") echo "Python 3 is required" ;;
+        "web_checking_deps") echo "Checking dependencies" ;;
+        "web_pip_failed") echo "pip install failed" ;;
+        "web_starting") echo "Web UI started →" ;;
+        "web_stop_hint") echo "Press Ctrl+C to stop" ;;
 
         *) echo "$key" ;;
       esac
