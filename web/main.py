@@ -222,8 +222,7 @@ async def launch_workspace(name: str):
     # Open new Terminal window via osascript and run cw launch
     # Escape backslashes and double quotes to prevent AppleScript injection
     safe_name = name.replace("\\", "\\\\").replace('"', '\\"')
-    cw_cmd = f'cw launch "{safe_name}"'
-    script = f'tell application "Terminal" to do script "{cw_cmd}"'
+    script = f'tell application "Terminal" to do script "cw launch \\"{safe_name}\\""'
     subprocess.Popen(["osascript", "-e", script])
 
     # Touch last_used in registry
