@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -72,3 +73,19 @@ def _write_workspace_json(ws_path: Path, data: dict) -> None:
 @app.get("/health")
 async def health():
     return {"status": "ok", "registry": str(REGISTRY_FILE)}
+
+
+templates.env.filters["urlencode"] = lambda s: quote(str(s), safe="")
+
+
+@app.get("/", response_class=HTMLResponse)
+async def dashboard(request: Request):
+    workspaces = _read_registry()
+    # Enrich with dir count from .workspace.json
+    for ws in workspaces:
+        ws_data = _read_workspace_json(Path(ws["path"]))
+        ws["dir_count"] = len(ws_data.get("dirs", []))
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "workspaces": workspaces,
+    })

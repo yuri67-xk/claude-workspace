@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Workspaces — claude-workspace{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold text-white">Workspaces</h1>
+  <p class="text-gray-400 text-sm mt-1">{{ workspaces | length }} workspace(s) registered</p>
+</div>
+
+{% if workspaces %}
+<div class="grid gap-4">
+  {% for ws in workspaces %}
+  <a href="/workspace/{{ ws.name | urlencode }}"
+     class="block bg-gray-900 border border-gray-800 hover:border-orange-500 rounded-lg p-5 transition-colors group">
+    <div class="flex items-start justify-between">
+      <div>
+        <h2 class="text-lg font-semibold text-white group-hover:text-orange-400 transition-colors">
+          {{ ws.name }}
+        </h2>
+        <p class="text-gray-500 text-sm mt-0.5">{{ ws.path }}</p>
+      </div>
+      <div class="text-right text-xs text-gray-500 shrink-0 ml-4">
+        <div>Last used</div>
+        <div class="text-gray-400">{{ ws.last_used[:10] if ws.last_used else "—" }}</div>
+      </div>
+    </div>
+    {% if ws.dir_count %}
+    <p class="text-gray-500 text-xs mt-3">{{ ws.dir_count }} director(y/ies)</p>
+    {% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-20 text-gray-600">
+  <p class="text-xl mb-4">No workspaces yet</p>
+  <a href="/new" class="text-orange-400 hover:text-orange-300 underline">Create your first workspace</a>
+</div>
+{% endif %}
+{% endblock %}
