@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "80d287fcbb07",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "docs/plans/2026-03-01-web-default-path-folder-picker-design.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/80/d287fcbb07/0/metadata.json",
+      "transcript": "/80/d287fcbb07/0/full.jsonl",
+      "context": "/80/d287fcbb07/0/context.md",
+      "content_hash": "/80/d287fcbb07/0/content_hash.txt",
+      "prompt": "/80/d287fcbb07/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 268,
+    "cache_creation_tokens": 53176,
+    "cache_read_tokens": 1485774,
+    "output_tokens": 9512,
+    "api_call_count": 26
+  }
+}

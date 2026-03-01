@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "80d287fcbb07",
+  "session_id": "621f1867-3803-47c5-ba0f-c64005c53903",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-01T12:22:41.313006Z",
+  "branch": "main",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "docs/plans/2026-03-01-web-default-path-folder-picker-design.md"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "2d20f2ac21ce",
+  "token_usage": {
+    "input_tokens": 268,
+    "cache_creation_tokens": 53176,
+    "cache_read_tokens": 1485774,
+    "output_tokens": 9512,
+    "api_call_count": 26
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-01T12:22:41.262979Z",
+    "agent_lines": 129,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 129,
+    "agent_percentage": 100
+  }
+}
