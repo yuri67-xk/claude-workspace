@@ -74,9 +74,14 @@
         hx-target="#dir-list"
         hx-swap="innerHTML"
         class="flex gap-2">
-    <input type="text" name="path"
+    <input type="text" id="add-dir-path" name="path"
            placeholder="/path/to/repo"
            class="flex-1 bg-gray-800 border border-gray-700 text-gray-200 text-sm rounded px-3 py-1.5 focus:outline-none focus:border-orange-500">
+    <button type="button" id="browse-add-dir"
+            onclick="pickFolder('add-dir-path', 'browse-add-dir')"
+            class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm px-3 py-1.5 rounded transition-colors whitespace-nowrap">
+      Browse...
+    </button>
     <input type="text" name="role"
            placeholder="Role (optional)"
            class="w-36 bg-gray-800 border border-gray-700 text-gray-200 text-sm rounded px-3 py-1.5 focus:outline-none focus:border-orange-500">
@@ -85,5 +90,26 @@
       Add
     </button>
   </form>
+
+  <script>
+    async function pickFolder(inputId, btnId) {
+      const input = document.getElementById(inputId);
+      const btn = document.getElementById(btnId);
+      const originalLabel = btn.textContent.trim();
+      btn.disabled = true;
+      btn.textContent = '...';
+      try {
+        const res = await fetch('/pick-folder');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.path) input.value = data.path;
+      } catch (_) {
+        // Silently ignore network errors
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalLabel;
+      }
+    }
+  </script>
 </div>
 {% endblock %}
