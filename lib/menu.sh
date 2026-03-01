@@ -78,6 +78,13 @@ cmd_menu() {
       return
     fi
 
+    # Cleanup registry
+    if [[ "$selected_path" == "CLEANUP" ]]; then
+      _menu_cleanup
+      _cw_menu_build_list
+      continue
+    fi
+
     # Auto-register if unregistered
     local idx
     for idx in "${!_CW_MENU_PATHS[@]}"; do
@@ -146,6 +153,7 @@ _menu_fzf_pick() {
   # Build tab-separated fzf input: PATH\tDISPLAY
   local fzf_entries=""
   fzf_entries+=$'CREATE_NEW\t'"$(t "menu_create_new")"$'\n'
+  fzf_entries+=$'CLEANUP\t'"$(t "menu_cleanup")"$'\n'
 
   local idx
   for idx in "${!_CW_MENU_PATHS[@]}"; do
@@ -287,6 +295,7 @@ _menu_numbered_pick() {
 
   echo "  $(dim "────────────────────────────────────────")" >&2
   echo "  [N] $(t "menu_create_new")" >&2
+  echo "  [C] $(t "menu_cleanup")" >&2
   echo "  [Q] $(t "menu_quit")" >&2
   echo "" >&2
 
@@ -297,6 +306,9 @@ _menu_numbered_pick() {
   case "$choice" in
     [Nn])
       echo "CREATE_NEW"
+      ;;
+    [Cc])
+      echo "CLEANUP"
       ;;
     [Qq]|"")
       echo ""
@@ -466,5 +478,53 @@ _menu_forget() {
     else
       info "$(t "cancel")"
     fi
+  fi
+}
+
+# ──────────────────────────────
+# Cleanup registry: remove entries for missing directories
+# ──────────────────────────────
+_menu_cleanup() {
+  local missing_paths=()
+  local missing_names=()
+
+  local ws_list
+  ws_list=$(registry_list)
+
+  while IFS= read -r ws; do
+    local name path
+    name=$(echo "$ws" | jq -r '.name')
+    path=$(echo "$ws" | jq -r '.path')
+    if [[ ! -d "$path" ]]; then
+      missing_paths+=("$path")
+      missing_names+=("$name")
+    fi
+  done < <(echo "$ws_list" | jq -c '.[]' 2>/dev/null)
+
+  if [[ ${#missing_paths[@]} -eq 0 ]]; then
+    echo ""
+    info "$(t "cleanup_none")"
+    echo ""
+    return
+  fi
+
+  echo ""
+  warn "${#missing_paths[@]} $(t "cleanup_found")"
+  echo ""
+  local i
+  for i in "${!missing_paths[@]}"; do
+    echo "  $(red "✗")  ${missing_names[$i]}  $(dim "${missing_paths[$i]}")"
+  done
+  echo ""
+  read -rp "  $(t "continue") [y/N]: " confirm
+  if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    local path
+    for path in "${missing_paths[@]+${missing_paths[@]}}"; do
+      registry_remove "$path"
+    done
+    success "${#missing_paths[@]} $(t "cleanup_done")"
+    echo ""
+  else
+    info "$(t "cancel")"
   fi
 }
