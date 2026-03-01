@@ -511,6 +511,7 @@ _menu_cleanup() {
     echo ""
     info "$(t "cleanup_none")"
     echo ""
+    read -rp "  $(t "press_enter")" _
     return
   fi
 
