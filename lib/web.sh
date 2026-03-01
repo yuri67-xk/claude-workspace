@@ -11,11 +11,16 @@ cmd_web() {
     exit 1
   fi
 
-  # Install requirements if needed
+  # Create/use virtual environment
   local req_file="$cw_web_dir/requirements.txt"
-  if [[ -f "$req_file" ]]; then
+  local venv_dir="$cw_web_dir/.venv"
+  if [[ ! -d "$venv_dir" ]]; then
     info "$(t "web_checking_deps")..."
-    pip3 install -q -r "$req_file" || {
+    python3 -m venv "$venv_dir" || {
+      error "$(t "web_pip_failed")"
+      exit 1
+    }
+    "$venv_dir/bin/pip" install -q -r "$req_file" || {
       error "$(t "web_pip_failed")"
       exit 1
     }
@@ -33,5 +38,5 @@ cmd_web() {
 
   # Start uvicorn
   cd "$cw_web_dir"
-  exec python3 -m uvicorn main:app --port "$port" --host 127.0.0.1
+  exec "$venv_dir/bin/python" -m uvicorn main:app --port "$port" --host 127.0.0.1
 }

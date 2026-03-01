@@ -194,7 +194,9 @@ async def launch_workspace(name: str):
     ws_entry, ws_path = _get_workspace(name)
 
     # Open new Terminal window via osascript and run cw launch
-    cw_cmd = f"cw launch '{name}'"
+    # Escape backslashes and double quotes to prevent AppleScript injection
+    safe_name = name.replace("\\", "\\\\").replace('"', '\\"')
+    cw_cmd = f'cw launch "{safe_name}"'
     script = f'tell application "Terminal" to do script "{cw_cmd}"'
     subprocess.Popen(["osascript", "-e", script])
 
@@ -223,13 +225,13 @@ async def forget_workspace(name: str):
 async def delete_workspace(name: str):
     ws_entry, ws_path = _get_workspace(name)
 
-    # Remove from registry
+    # Delete directory first, then remove from registry
+    if ws_path.exists():
+        shutil.rmtree(str(ws_path))
+
+    # Then remove from registry
     workspaces = _read_registry()
     updated = [w for w in workspaces if w["name"] != name]
     _write_registry(updated)
-
-    # Delete directory
-    if ws_path.exists():
-        shutil.rmtree(str(ws_path))
 
     return RedirectResponse(url="/", status_code=303)
