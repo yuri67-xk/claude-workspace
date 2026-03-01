@@ -394,16 +394,76 @@ _menu_forget() {
   local ws_path="$1"
   local ws_name="$2"
 
-  echo ""
-  warn "\"${ws_name}\" $(t "remove_from_registry")"
-  echo "  $(dim "$(t "files_remain")")"
-  echo ""
-  read -rp "  $(t "continue") [y/N]: " confirm
-  if [[ "$confirm" =~ ^[Yy]$ ]]; then
-    registry_remove "$ws_path"
-    success "$(t "deleted"): $ws_name"
-    echo ""
+  # Step 1: Pick mode via fzf (or numbered fallback)
+  local registry_only_label delete_dir_label
+  registry_only_label=$(t "forget_mode_registry")
+  delete_dir_label=$(t "forget_mode_delete")
+
+  local mode
+  if command -v fzf &>/dev/null; then
+    mode=$(printf '%s\n' "$registry_only_label" "$delete_dir_label" | \
+      fzf --height=30% --border \
+          --header="  $ws_name" \
+          --header-first \
+          --prompt='  Delete mode > ' \
+          2>/dev/null || true)
   else
-    info "$(t "cancel")"
+    # Numbered fallback (output to stderr to avoid stdout pollution)
+    echo "" >&2
+    echo "  1) $registry_only_label" >&2
+    echo "  2) $delete_dir_label" >&2
+    echo "" >&2
+    local choice
+    read -rp "  Select [1/2]: " choice
+    case "$choice" in
+      2) mode="$delete_dir_label" ;;
+      *) mode="$registry_only_label" ;;
+    esac
+  fi
+
+  [[ -z "$mode" ]] && return  # Esc -> back to sub-menu
+
+  if [[ "$mode" == "$registry_only_label" ]]; then
+    # Registry only (current behavior)
+    echo ""
+    warn "\"${ws_name}\" $(t "remove_from_registry")"
+    echo "  $(dim "$(t "files_remain")")"
+    echo ""
+    read -rp "  $(t "continue") [y/N]: " confirm
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+      registry_remove "$ws_path"
+      success "$(t "deleted"): $ws_name"
+      echo ""
+    else
+      info "$(t "cancel")"
+    fi
+
+  elif [[ "$mode" == "$delete_dir_label" ]]; then
+    # Safety check: must be under WorkingProjects/
+    local wp_base="${WORKING_PROJECTS_DIR:-$HOME/WorkingProjects}"
+    wp_base=$(expand_path "$wp_base")
+    if [[ "$ws_path" != "$wp_base"/* ]]; then
+      echo ""
+      error "$(t "forget_delete_outside_wp")"
+      echo "  $(dim "$ws_path")"
+      echo ""
+      return  # back to sub-menu
+    fi
+
+    # Destructive confirmation
+    echo ""
+    warn "$(t "forget_delete_confirm"): \"$ws_name\""
+    echo "  $(dim "$ws_path")"
+    warn "$(t "irreversible")"
+    echo ""
+    read -rp "  $(t "continue") [y/N]: " confirm
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+      registry_remove "$ws_path"
+      rm -rf "$ws_path"
+      success "$(t "forget_dir_deleted"): $ws_name"
+      echo ""
+    else
+      info "$(t "cancel")"
+    fi
   fi
 }
