@@ -97,6 +97,8 @@ def pick_folder():
         )
     except subprocess.TimeoutExpired:
         return {"path": ""}
+    if result.returncode != 0:
+        return {"path": ""}
     path = result.stdout.strip().rstrip("/")
     return {"path": path}
 
