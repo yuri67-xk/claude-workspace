@@ -77,6 +77,34 @@ async def health():
     return {"status": "ok", "registry": str(REGISTRY_FILE)}
 
 
+@app.get("/pick-folder")
+async def pick_folder():
+    """Open macOS native folder selection dialog via osascript and return POSIX path."""
+    # Step 1: Show native folder picker
+    result = subprocess.run(
+        ["osascript", "-e", 'choose folder with prompt "Select a folder:"'],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        # User cancelled or osascript unavailable
+        return {"path": ""}
+
+    # Step 2: Convert AppleScript alias to POSIX path
+    alias = result.stdout.strip()
+    posix_result = subprocess.run(
+        ["osascript", "-e", f"POSIX path of ({alias})"],
+        capture_output=True,
+        text=True,
+    )
+    if posix_result.returncode != 0:
+        return {"path": ""}
+
+    # Strip trailing slash
+    path = posix_result.stdout.strip().rstrip("/")
+    return {"path": path}
+
+
 templates.env.filters["urlencode"] = lambda s: quote(str(s), safe="")
 templates.env.tests["is_existing_dir"] = lambda d: Path(d["path"]).is_dir()
 
