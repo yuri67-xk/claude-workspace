@@ -78,30 +78,26 @@ async def health():
 
 
 @app.get("/pick-folder")
-async def pick_folder():
+def pick_folder():
     """Open macOS native folder selection dialog via osascript and return POSIX path."""
-    # Step 1: Show native folder picker
-    result = subprocess.run(
-        ["osascript", "-e", 'choose folder with prompt "Select a folder:"'],
-        capture_output=True,
-        text=True,
+    script = (
+        'try\n'
+        '    set f to choose folder with prompt "Select a folder:"\n'
+        '    return POSIX path of f\n'
+        'on error number -128\n'
+        '    return ""\n'
+        'end try'
     )
-    if result.returncode != 0:
-        # User cancelled or osascript unavailable
+    try:
+        result = subprocess.run(
+            ["osascript", "-e", script],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired:
         return {"path": ""}
-
-    # Step 2: Convert AppleScript alias to POSIX path
-    alias = result.stdout.strip()
-    posix_result = subprocess.run(
-        ["osascript", "-e", f"POSIX path of ({alias})"],
-        capture_output=True,
-        text=True,
-    )
-    if posix_result.returncode != 0:
-        return {"path": ""}
-
-    # Strip trailing slash
-    path = posix_result.stdout.strip().rstrip("/")
+    path = result.stdout.strip().rstrip("/")
     return {"path": path}
 
 
