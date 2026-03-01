@@ -5,6 +5,7 @@ set -euo pipefail
 CW_VERSION="0.2.0"
 CW_DIR="${CW_HOME:-$HOME/.claude-workspace}"
 CW_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)"
+CW_SKILLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../skills" && pwd)"
 
 # Load libraries (order matters for dependencies)
 source "$CW_LIB_DIR/utils.sh"

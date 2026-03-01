@@ -135,9 +135,26 @@ cmd_setup() {
   success "$(t "created"): $claude_md"
 
   # ──────────────────────────────
-  # Step 6: Register to global registry
+  # Step 6: Install skills to .claude/skills/
   # ──────────────────────────────
   step "Step 6: $(t "setup_step6")"
+
+  if [[ -d "$CW_SKILLS_DIR" ]]; then
+    local ws_skills_dir="$target_dir/.claude/skills"
+    mkdir -p "$ws_skills_dir"
+    for skill_dir in "$CW_SKILLS_DIR"/*/; do
+      [[ -d "$skill_dir" ]] || continue
+      local skill_name
+      skill_name="$(basename "$skill_dir")"
+      cp -R "$skill_dir" "$ws_skills_dir/$skill_name"
+    done
+    success "$(t "setup_skills_installed"): .claude/skills/"
+  fi
+
+  # ──────────────────────────────
+  # Step 7: Register to global registry
+  # ──────────────────────────────
+  step "Step 7: $(t "setup_step7")"
   registry_add "$ws_name" "$target_dir"
   success "$(t "registered"): ~/.claude-workspace/registry.json"
 

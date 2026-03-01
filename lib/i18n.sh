@@ -113,7 +113,9 @@ t() {
         "setup_step3") echo "リポジトリ/ディレクトリの追加" ;;
         "setup_step4") echo "設定ファイルを生成" ;;
         "setup_step5") echo "CLAUDE.md を生成" ;;
-        "setup_step6") echo "レジストリに登録" ;;
+        "setup_step6") echo "スキルをインストール" ;;
+        "setup_step7") echo "レジストリに登録" ;;
+        "setup_skills_installed") echo "スキルをインストールしました" ;;
         "setup_path_hint") echo "fzf でディレクトリを選択 (fzf なしの場合はパスを入力)。完了したら空選択または Esc。" ;;
         "setup_run") echo "起動するには:" ;;
         "setup_claude_md") echo "Workspace CLAUDE.md を生成" ;;
@@ -278,7 +280,9 @@ t() {
         "setup_step3") echo "Add repositories/directories" ;;
         "setup_step4") echo "Generate configuration files" ;;
         "setup_step5") echo "Generate CLAUDE.md" ;;
-        "setup_step6") echo "Register to registry" ;;
+        "setup_step6") echo "Install skills" ;;
+        "setup_step7") echo "Register to registry" ;;
+        "setup_skills_installed") echo "Skills installed" ;;
         "setup_path_hint") echo "Select a directory with fzf (or type a path if fzf is unavailable). Press Esc or empty Enter when done." ;;
         "setup_run") echo "To launch:" ;;
         "setup_claude_md") echo "Generate workspace CLAUDE.md" ;;
