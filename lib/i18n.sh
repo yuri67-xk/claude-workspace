@@ -172,6 +172,10 @@ t() {
         "forget_delete_outside_wp") echo "WorkingProjects/ 外のディレクトリは削除できません" ;;
         "forget_dir_deleted") echo "ディレクトリを削除しました" ;;
         "irreversible") echo "この操作は取り消せません" ;;
+        "menu_cleanup") echo "レジストリをクリーンアップ" ;;
+        "cleanup_none") echo "クリーンアップ不要: missing エントリはありません" ;;
+        "cleanup_found") echo "件の missing エントリが見つかりました" ;;
+        "cleanup_done") echo "件を削除しました" ;;
 
         # === Usage ===
         "usage_title") echo "Claude Code マルチリポジトリ Workspace マネージャー" ;;
@@ -339,6 +343,10 @@ t() {
         "forget_delete_outside_wp") echo "Directory is outside WorkingProjects/ -- cannot delete" ;;
         "forget_dir_deleted") echo "Directory deleted" ;;
         "irreversible") echo "This cannot be undone" ;;
+        "menu_cleanup") echo "Cleanup registry" ;;
+        "cleanup_none") echo "Registry is clean -- no missing entries" ;;
+        "cleanup_found") echo "missing entries found" ;;
+        "cleanup_done") echo "entries removed" ;;
 
         # === Usage ===
         "usage_title") echo "Claude Code multi-repo workspace manager" ;;
