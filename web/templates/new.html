@@ -84,7 +84,11 @@
 
   nameInput.addEventListener('input', () => {
     if (!pathManuallyEdited) {
-      const slug = nameInput.value.trim().toLowerCase().replace(/\s+/g, '-');
+      const slug = nameInput.value.trim().toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')  // remove chars that aren't alphanumeric, space, or hyphen
+        .replace(/\s+/g, '-')           // spaces → hyphens
+        .replace(/-+/g, '-')            // collapse multiple hyphens
+        .replace(/^-|-$/g, '');         // trim leading/trailing hyphens
       pathInput.value = slug ? `~/WorkingProjects/${slug}` : '';
     }
   });
@@ -93,11 +97,12 @@
   async function pickFolder(inputId, btnId) {
     const input = document.getElementById(inputId);
     const btn = document.getElementById(btnId);
-    const originalLabel = btn.textContent;
+    const originalLabel = btn.textContent.trim();
     btn.disabled = true;
     btn.textContent = '...';
     try {
       const res = await fetch('/pick-folder');
+      if (!res.ok) return;
       const data = await res.json();
       if (data.path) {
         input.value = data.path;
