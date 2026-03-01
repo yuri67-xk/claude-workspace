@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}{{ ws.name }} — claude-workspace{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center gap-3">
+  <a href="/" class="text-gray-500 hover:text-gray-300 text-sm">← Workspaces</a>
+</div>
+
+<div class="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-6">
+  <div class="flex items-start justify-between mb-4">
+    <div>
+      <h1 class="text-2xl font-bold text-white">{{ ws.name }}</h1>
+      <p class="text-gray-500 text-sm mt-1">{{ ws.path }}</p>
+      {% if ws_data.description %}
+      <p class="text-gray-400 text-sm mt-2">{{ ws_data.description }}</p>
+      {% endif %}
+    </div>
+    <div class="text-xs text-gray-500 text-right shrink-0 ml-4">
+      <div>Created: {{ ws.created_at[:10] if ws.created_at else "—" }}</div>
+      <div>Last used: {{ ws.last_used[:10] if ws.last_used else "—" }}</div>
+    </div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="flex flex-wrap gap-2 pt-4 border-t border-gray-800">
+    <form method="post" action="/workspace/{{ ws.name | urlencode }}/launch">
+      <button type="submit"
+              class="bg-orange-500 hover:bg-orange-400 text-white text-sm px-4 py-1.5 rounded transition-colors">
+        Launch in Terminal
+      </button>
+    </form>
+    <form method="post" action="/workspace/{{ ws.name | urlencode }}/forget"
+          onsubmit="return confirm('Remove from registry? (files kept)')">
+      <button type="submit"
+              class="border border-gray-700 hover:border-gray-500 text-gray-400 hover:text-gray-200 text-sm px-4 py-1.5 rounded transition-colors">
+        Forget
+      </button>
+    </form>
+    <form method="post" action="/workspace/{{ ws.name | urlencode }}/delete"
+          onsubmit="return confirm('Delete workspace directory? This cannot be undone.')">
+      <button type="submit"
+              class="border border-red-900 hover:border-red-600 text-red-500 hover:text-red-400 text-sm px-4 py-1.5 rounded transition-colors">
+        Delete
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Directories -->
+<div class="bg-gray-900 border border-gray-800 rounded-lg p-6">
+  <h2 class="text-base font-semibold text-white mb-4">Directories</h2>
+
+  <div id="dir-list" class="space-y-2 mb-4">
+    {% for dir in ws_data.get('dirs', []) %}
+    <div class="flex items-center justify-between bg-gray-800 rounded px-3 py-2 text-sm">
+      <div>
+        <span class="text-gray-200">{{ dir.path }}</span>
+        {% if dir.role %}
+        <span class="text-gray-500 ml-2">({{ dir.role }})</span>
+        {% endif %}
+      </div>
+      {% if not dir | is_existing_dir %}
+      <span class="text-red-400 text-xs ml-2">missing</span>
+      {% endif %}
+    </div>
+    {% else %}
+    <p class="text-gray-500 text-sm">No directories added yet.</p>
+    {% endfor %}
+  </div>
+
+  <!-- Add dir form (HTMX) -->
+  <form hx-post="/workspace/{{ ws.name | urlencode }}/add-dir"
+        hx-target="#dir-list"
+        hx-swap="innerHTML"
+        class="flex gap-2">
+    <input type="text" name="path"
+           placeholder="/path/to/repo"
+           class="flex-1 bg-gray-800 border border-gray-700 text-gray-200 text-sm rounded px-3 py-1.5 focus:outline-none focus:border-orange-500">
+    <input type="text" name="role"
+           placeholder="Role (optional)"
+           class="w-36 bg-gray-800 border border-gray-700 text-gray-200 text-sm rounded px-3 py-1.5 focus:outline-none focus:border-orange-500">
+    <button type="submit"
+            class="bg-gray-700 hover:bg-gray-600 text-gray-200 text-sm px-3 py-1.5 rounded transition-colors">
+      Add
+    </button>
+  </form>
+</div>
+{% endblock %}

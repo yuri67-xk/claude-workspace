@@ -76,6 +76,7 @@ async def health():
 
 
 templates.env.filters["urlencode"] = lambda s: quote(str(s), safe="")
+templates.env.tests["is_existing_dir"] = lambda d: Path(d["path"]).is_dir()
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -88,4 +89,15 @@ async def dashboard(request: Request):
     return templates.TemplateResponse("index.html", {
         "request": request,
         "workspaces": workspaces,
+    })
+
+
+@app.get("/workspace/{name}", response_class=HTMLResponse)
+async def workspace_detail(request: Request, name: str):
+    ws_entry, ws_path = _get_workspace(name)
+    ws_data = _read_workspace_json(ws_path)
+    return templates.TemplateResponse("workspace.html", {
+        "request": request,
+        "ws": ws_entry,
+        "ws_data": ws_data,
     })
