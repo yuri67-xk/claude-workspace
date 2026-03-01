@@ -219,11 +219,11 @@ async def add_directory(
 async def launch_workspace(name: str):
     ws_entry, ws_path = _get_workspace(name)
 
-    # Open new Terminal window via osascript and run cw launch
-    # Escape backslashes and double quotes to prevent AppleScript injection
+    # Open new Ghostty window and run cw launch
+    # Escape backslashes and double quotes for bash -c string
     safe_name = name.replace("\\", "\\\\").replace('"', '\\"')
-    script = f'tell application "Terminal" to do script "cw launch \\"{safe_name}\\""'
-    subprocess.Popen(["osascript", "-e", script])
+    ghostty_bin = shutil.which("ghostty") or "/Applications/Ghostty.app/Contents/MacOS/ghostty"
+    subprocess.Popen([ghostty_bin, "--", "bash", "-c", f'cw launch "{safe_name}"'])
 
     # Touch last_used in registry
     workspaces = _read_registry()
