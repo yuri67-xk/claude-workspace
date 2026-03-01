@@ -51,8 +51,12 @@ cp "$CW_REPO_DIR/lib/"*.sh "$CW_HOME/lib/"
 mkdir -p "$CW_HOME/skills"
 cp -r "$CW_REPO_DIR/skills/"* "$CW_HOME/skills/" 2>/dev/null || true
 
+mkdir -p "$CW_HOME/web/templates/partials"
+cp -r "$CW_REPO_DIR/web/"* "$CW_HOME/web/"
+
 sed -e "s|CW_LIB_DIR=.*|CW_LIB_DIR=\"$CW_HOME/lib\"|" \
     -e "s|CW_SKILLS_DIR=.*|CW_SKILLS_DIR=\"$CW_HOME/skills\"|" \
+    -e "s|CW_WEB_DIR=.*|CW_WEB_DIR=\"$CW_HOME/web\"|" \
   "$CW_REPO_DIR/bin/cw" > "/tmp/cw_install_tmp"
 
 if [[ -w "$INSTALL_BIN" ]]; then
