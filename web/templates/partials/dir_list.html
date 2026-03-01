@@ -1,0 +1,15 @@
+{% for dir in dirs %}
+<div class="flex items-center justify-between bg-gray-800 rounded px-3 py-2 text-sm">
+  <div>
+    <span class="text-gray-200">{{ dir.path }}</span>
+    {% if dir.role %}
+    <span class="text-gray-500 ml-2">({{ dir.role }})</span>
+    {% endif %}
+  </div>
+  {% if not dir | is_existing_dir %}
+  <span class="text-red-400 text-xs ml-2">missing</span>
+  {% endif %}
+</div>
+{% else %}
+<p class="text-gray-500 text-sm">No directories added yet.</p>
+{% endfor %}

@@ -162,3 +162,28 @@ async def create_workspace(
     _write_registry(workspaces)
 
     return RedirectResponse(url=f"/workspace/{name}", status_code=303)
+
+
+@app.post("/workspace/{name}/add-dir", response_class=HTMLResponse)
+async def add_directory(
+    request: Request,
+    name: str,
+    path: str = Form(...),
+    role: str = Form(""),
+):
+    ws_entry, ws_path = _get_workspace(name)
+    ws_data = _read_workspace_json(ws_path)
+
+    resolved = str(Path(path.strip()).expanduser().resolve())
+    dirs = ws_data.get("dirs", [])
+
+    # Skip duplicate
+    if not any(d["path"] == resolved for d in dirs):
+        dirs.append({"path": resolved, "role": role.strip()})
+        ws_data["dirs"] = dirs
+        _write_workspace_json(ws_path, ws_data)
+
+    return templates.TemplateResponse("partials/dir_list.html", {
+        "request": request,
+        "dirs": dirs,
+    })
