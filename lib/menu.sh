@@ -416,8 +416,9 @@ _menu_forget() {
     local choice
     read -rp "  Select [1/2]: " choice
     case "$choice" in
+      1) mode="$registry_only_label" ;;
       2) mode="$delete_dir_label" ;;
-      *) mode="$registry_only_label" ;;
+      *) mode="" ;;
     esac
   fi
 
