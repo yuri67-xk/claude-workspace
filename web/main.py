@@ -70,6 +70,64 @@ def _write_workspace_json(ws_path: Path, data: dict) -> None:
     tmp.replace(ws_file)
 
 
+def _generate_claude_md(ws_path: Path, ws_data: dict) -> None:
+    """Generate workspace CLAUDE.md with full template (mirrors bash _generate_workspace_claude_md)."""
+    ws_name = ws_data.get("name", "")
+    ws_description = ws_data.get("description", "") or "Describe this workspace here."
+    dirs = ws_data.get("dirs", [])
+    created_at = datetime.now().strftime("%Y-%m-%d")
+    ws_name_lower = ws_name.lower().replace(" ", "-")
+
+    dirs_rows = ""
+    for d in dirs:
+        path = d.get("path", "")
+        role = d.get("role", "") or Path(path).name
+        dirs_rows += f"| {role} | `{path}` |\n"
+
+    content = (
+        f"# Workspace: {ws_name}\n\n"
+        f"> {ws_description}\n\n"
+        f"Created: {created_at}\n\n"
+        "---\n\n"
+        "## Linked Repositories\n\n"
+        "| Role | Path |\n"
+        "|------|------|\n"
+        f"{dirs_rows}\n"
+        "## Workflow Rules\n\n"
+        "- **REQUIRED**: Use the `workspace-task-manager` skill for task decomposition and management\n"
+        "  - Decompose workspace goals into tasks before starting implementation\n"
+        "  - Each task gets a `YYYY-MM-DD-{task-name}/` directory under this workspace\n"
+        "  - Follow the superpowers workflow (brainstorming → writing-plans → execute) per task\n"
+        "  - Save design docs and plans into the task directory, not `docs/plans/`\n"
+        f"- Branch naming convention: `feature/ws-{ws_name_lower}-*`\n\n"
+        "## Current Tasks\n\n"
+        "| Status | Task | Directory | Priority |\n"
+        "|--------|------|-----------|----------|\n"
+        "| | (Use workspace-task-manager skill to populate) | | |\n\n"
+        "## Notes\n\n"
+        "Record notes and design decisions here.\n"
+    )
+
+    (ws_path / "CLAUDE.md").write_text(content)
+
+
+def _install_skills(ws_path: Path) -> None:
+    """Copy skills from ~/.claude-workspace/skills/ to workspace/.claude/skills/."""
+    skills_src = CW_DIR / "skills"
+    if not skills_src.is_dir():
+        return
+
+    skills_dst = ws_path / ".claude" / "skills"
+    skills_dst.mkdir(parents=True, exist_ok=True)
+
+    for skill_dir in skills_src.iterdir():
+        if skill_dir.is_dir():
+            dst = skills_dst / skill_dir.name
+            if dst.exists():
+                shutil.rmtree(dst)
+            shutil.copytree(skill_dir, dst)
+
+
 # ─── Health check ─────────────────────────────────────────────────────────────
 
 @app.get("/health")
@@ -173,10 +231,11 @@ async def create_workspace(
     }
     _write_workspace_json(ws_path, ws_data)
 
-    # Write CLAUDE.md stub
-    claude_md = ws_path / "CLAUDE.md"
-    if not claude_md.exists():
-        claude_md.write_text(f"# {name}\n\n{description}\n")
+    # Generate CLAUDE.md with full template
+    _generate_claude_md(ws_path, ws_data)
+
+    # Install skills to .claude/skills/
+    _install_skills(ws_path)
 
     # Register in registry
     workspaces.append({
@@ -208,6 +267,7 @@ async def add_directory(
         dirs.append({"path": resolved, "role": role.strip()})
         ws_data["dirs"] = dirs
         _write_workspace_json(ws_path, ws_data)
+        _generate_claude_md(ws_path, ws_data)
 
     return templates.TemplateResponse("partials/dir_list.html", {
         "request": request,
