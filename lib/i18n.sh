@@ -164,6 +164,12 @@ t() {
         "menu_action_finder") echo "⊙ Finder で開く" ;;
         "menu_action_forget") echo "✗ レジストリから削除" ;;
         "menu_action_back") echo "← 戻る" ;;
+        "forget_mode_registry") echo "レジストリのみ削除" ;;
+        "forget_mode_delete") echo "ディレクトリを削除" ;;
+        "forget_delete_confirm") echo "このディレクトリを完全に削除します" ;;
+        "forget_delete_outside_wp") echo "WorkingProjects/ 外のディレクトリは削除できません" ;;
+        "forget_dir_deleted") echo "ディレクトリを削除しました" ;;
+        "irreversible") echo "この操作は取り消せません" ;;
 
         # === Usage ===
         "usage_title") echo "Claude Code マルチリポジトリ Workspace マネージャー" ;;
@@ -323,6 +329,12 @@ t() {
         "menu_action_finder") echo "⊙ Open in Finder" ;;
         "menu_action_forget") echo "✗ Forget" ;;
         "menu_action_back") echo "← Back" ;;
+        "forget_mode_registry") echo "Registry only" ;;
+        "forget_mode_delete") echo "Delete directory" ;;
+        "forget_delete_confirm") echo "Permanently delete this directory" ;;
+        "forget_delete_outside_wp") echo "Directory is outside WorkingProjects/ -- cannot delete" ;;
+        "forget_dir_deleted") echo "Directory deleted" ;;
+        "irreversible") echo "This cannot be undone" ;;
 
         # === Usage ===
         "usage_title") echo "Claude Code multi-repo workspace manager" ;;
