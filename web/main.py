@@ -104,7 +104,7 @@ def pick_folder():
 
 
 templates.env.filters["urlencode"] = lambda s: quote(str(s), safe="")
-templates.env.tests["is_existing_dir"] = lambda d: Path(d["path"]).is_dir()
+templates.env.filters["is_existing_dir"] = lambda d: Path(d["path"]).is_dir()
 
 
 @app.get("/", response_class=HTMLResponse)
