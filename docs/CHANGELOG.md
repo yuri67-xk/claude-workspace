@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Interactive fzf workspace menu with right-side preview pane showing workspace details
 - Sub-menu per workspace with actions: Resume, Add Dir, Info, Open in Finder, Forget, Back
 - All workspace operations now complete within a single `cw` CLI session without exiting
+- Forget action now offers a secondary mode picker: "Registry only" (previous behavior) or "Delete directory" (`rm -rf`, restricted to `WorkingProjects/` subdirectories). Includes safety guard and two-step destructive confirmation.
 
 ### Changed
 
