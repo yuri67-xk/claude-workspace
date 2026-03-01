@@ -3,7 +3,9 @@
 
 import json
 import os
+import shutil
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote
 
@@ -101,3 +103,62 @@ async def workspace_detail(request: Request, name: str):
         "ws": ws_entry,
         "ws_data": ws_data,
     })
+
+
+@app.get("/new", response_class=HTMLResponse)
+async def new_workspace_form(request: Request):
+    return templates.TemplateResponse("new.html", {"request": request, "error": None})
+
+
+@app.post("/workspace", response_class=HTMLResponse)
+async def create_workspace(
+    request: Request,
+    name: str = Form(...),
+    description: str = Form(""),
+    workspace_path: str = Form(...),
+    initial_dir: str = Form(""),
+):
+    ws_path = Path(workspace_path).expanduser().resolve()
+
+    # Validate name uniqueness
+    workspaces = _read_registry()
+    if any(w["name"] == name for w in workspaces):
+        return templates.TemplateResponse("new.html", {
+            "request": request,
+            "error": f"Workspace '{name}' already exists.",
+        }, status_code=400)
+
+    # Create workspace directory
+    ws_path.mkdir(parents=True, exist_ok=True)
+
+    # Build dirs list
+    dirs = []
+    if initial_dir.strip():
+        dirs.append({"path": str(Path(initial_dir.strip()).expanduser().resolve()), "role": ""})
+
+    # Write .workspace.json
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    ws_data = {
+        "name": name,
+        "description": description,
+        "workspace_path": str(ws_path),
+        "created_at": now,
+        "dirs": dirs,
+    }
+    _write_workspace_json(ws_path, ws_data)
+
+    # Write CLAUDE.md stub
+    claude_md = ws_path / "CLAUDE.md"
+    if not claude_md.exists():
+        claude_md.write_text(f"# {name}\n\n{description}\n")
+
+    # Register in registry
+    workspaces.append({
+        "name": name,
+        "path": str(ws_path),
+        "created_at": now,
+        "last_used": now,
+    })
+    _write_registry(workspaces)
+
+    return RedirectResponse(url=f"/workspace/{name}", status_code=303)

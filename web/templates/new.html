@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}New Workspace — claude-workspace{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center gap-3">
+  <a href="/" class="text-gray-500 hover:text-gray-300 text-sm">← Workspaces</a>
+</div>
+
+<div class="bg-gray-900 border border-gray-800 rounded-lg p-6 max-w-xl">
+  <h1 class="text-xl font-bold text-white mb-6">New Workspace</h1>
+
+  <form method="post" action="/workspace" class="space-y-4">
+    <div>
+      <label class="block text-sm text-gray-400 mb-1">Name <span class="text-red-400">*</span></label>
+      <input type="text" name="name" required autofocus
+             placeholder="My Project"
+             class="w-full bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+    </div>
+
+    <div>
+      <label class="block text-sm text-gray-400 mb-1">Description</label>
+      <input type="text" name="description"
+             placeholder="Brief description of this workspace"
+             class="w-full bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+    </div>
+
+    <div>
+      <label class="block text-sm text-gray-400 mb-1">Workspace directory <span class="text-red-400">*</span></label>
+      <input type="text" name="workspace_path" required
+             placeholder="/Users/you/WorkingProjects/my-project"
+             class="w-full bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+      <p class="text-gray-600 text-xs mt-1">Directory will be created if it doesn't exist.</p>
+    </div>
+
+    <div>
+      <label class="block text-sm text-gray-400 mb-1">Initial directory (optional)</label>
+      <input type="text" name="initial_dir"
+             placeholder="/path/to/repo"
+             class="w-full bg-gray-800 border border-gray-700 text-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-orange-500">
+    </div>
+
+    {% if error %}
+    <div class="text-red-400 text-sm bg-red-950 border border-red-900 rounded px-3 py-2">
+      {{ error }}
+    </div>
+    {% endif %}
+
+    <div class="flex gap-3 pt-2">
+      <button type="submit"
+              class="bg-orange-500 hover:bg-orange-400 text-white text-sm px-5 py-2 rounded transition-colors">
+        Create Workspace
+      </button>
+      <a href="/" class="border border-gray-700 hover:border-gray-500 text-gray-400 hover:text-gray-200 text-sm px-5 py-2 rounded transition-colors">
+        Cancel
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}
