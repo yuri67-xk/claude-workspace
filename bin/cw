@@ -6,6 +6,7 @@ CW_VERSION="0.2.0"
 CW_DIR="${CW_HOME:-$HOME/.claude-workspace}"
 CW_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)"
 CW_SKILLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../skills" && pwd)"
+CW_WEB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../web" && pwd)"
 
 # Load libraries (order matters for dependencies)
 source "$CW_LIB_DIR/utils.sh"
@@ -19,6 +20,7 @@ source "$CW_LIB_DIR/new.sh"
 source "$CW_LIB_DIR/menu.sh"
 source "$CW_LIB_DIR/update.sh"
 source "$CW_LIB_DIR/lang.sh"
+source "$CW_LIB_DIR/web.sh"
 
 usage() {
   cat <<EOF
@@ -38,6 +40,7 @@ $(bold "$(t "usage"):")
   cw scan               $(t "usage_scan")
   cw update             $(t "usage_update")
   cw lang [en|ja]       $(t "usage_lang")
+  cw web [port]         $(t "usage_web")
   cw version            $(t "usage_version")
 
 $(bold "$(t "usage_examples"):")
@@ -147,6 +150,7 @@ main() {
     list|ls)      cmd_list ;;
     info)         cmd_info "${@:2}" ;;
     add-dir)      cmd_add_dir "${@:2}" ;;
+    web)          cmd_web "${@:2}" ;;
     version|-v|--version) echo "cw v${CW_VERSION}" ;;
     help|-h|--help) usage ;;
 
