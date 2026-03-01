@@ -187,6 +187,12 @@ if [[ "$ws_path" == "CREATE_NEW" ]]; then
   echo ""
   echo "  A new directory will be created under"
   echo "  ~/WorkingProjects/ and set up for cw."
+elif [[ "$ws_path" == "CLEANUP" ]]; then
+  echo ""
+  echo "  Cleanup registry"
+  echo ""
+  echo "  Removes entries whose workspace directory"
+  echo "  no longer exists on disk."
 elif [[ -f "$ws_file" ]]; then
   name=$(jq -r '.name // ""' "$ws_file" 2>/dev/null)
   desc=$(jq -r '.description // ""' "$ws_file" 2>/dev/null)
@@ -300,7 +306,7 @@ _menu_numbered_pick() {
   echo "" >&2
 
   local choice
-  read -rep "  $(t "cmd_select") [1-${i} / N / Q]: " choice
+  read -rep "  $(t "cmd_select") [1-${i} / N / C / Q]: " choice
   echo "" >&2
 
   case "$choice" in
