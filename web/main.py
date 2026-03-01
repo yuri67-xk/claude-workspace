@@ -187,3 +187,49 @@ async def add_directory(
         "request": request,
         "dirs": dirs,
     })
+
+
+@app.post("/workspace/{name}/launch")
+async def launch_workspace(name: str):
+    ws_entry, ws_path = _get_workspace(name)
+
+    # Open new Terminal window via osascript and run cw launch
+    cw_cmd = f"cw launch '{name}'"
+    script = f'tell application "Terminal" to do script "{cw_cmd}"'
+    subprocess.Popen(["osascript", "-e", script])
+
+    # Touch last_used in registry
+    workspaces = _read_registry()
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    for ws in workspaces:
+        if ws["name"] == name:
+            ws["last_used"] = now
+    _write_registry(workspaces)
+
+    return RedirectResponse(url=f"/workspace/{name}", status_code=303)
+
+
+@app.post("/workspace/{name}/forget")
+async def forget_workspace(name: str):
+    workspaces = _read_registry()
+    updated = [w for w in workspaces if w["name"] != name]
+    if len(updated) == len(workspaces):
+        raise HTTPException(status_code=404, detail=f"Workspace not found: {name}")
+    _write_registry(updated)
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.post("/workspace/{name}/delete")
+async def delete_workspace(name: str):
+    ws_entry, ws_path = _get_workspace(name)
+
+    # Remove from registry
+    workspaces = _read_registry()
+    updated = [w for w in workspaces if w["name"] != name]
+    _write_registry(updated)
+
+    # Delete directory
+    if ws_path.exists():
+        shutil.rmtree(str(ws_path))
+
+    return RedirectResponse(url="/", status_code=303)
