@@ -184,7 +184,7 @@ _generate_workspace_claude_md() {
   ws_name_lower=$(echo "$ws_name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
 
   # Use printf to avoid heredoc variable expansion issues
-  printf '# Workspace: %s\n\n> %s\n\nCreated: %s\n\n---\n\n## Linked Repositories\n\n| Role | Path |\n|------|------|\n%s\n## Workflow Rules\n\n- Add additional rules here\n- (Example) Branch naming convention: `feature/ws-%s-*`\n\n## Current Tasks\n\n- [ ] Task 1\n- [ ] Task 2\n\n## Notes\n\nRecord notes and design decisions here.\n' \
+  printf '# Workspace: %s\n\n> %s\n\nCreated: %s\n\n---\n\n## Linked Repositories\n\n| Role | Path |\n|------|------|\n%s\n## Workflow Rules\n\n- **REQUIRED**: Use the `workspace-task-manager` skill for task decomposition and management\n  - Decompose workspace goals into tasks before starting implementation\n  - Each task gets a `YYYY-MM-DD-{task-name}/` directory under this workspace\n  - Follow the superpowers workflow (brainstorming → writing-plans → execute) per task\n  - Save design docs and plans into the task directory, not `docs/plans/`\n- Branch naming convention: `feature/ws-%s-*`\n\n## Current Tasks\n\n| Status | Task | Directory | Priority |\n|--------|------|-----------|----------|\n| | (Use workspace-task-manager skill to populate) | | |\n\n## Notes\n\nRecord notes and design decisions here.\n' \
     "$ws_name" \
     "${ws_description:-Describe this workspace here.}" \
     "$created_at" \
