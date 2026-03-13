@@ -41,6 +41,14 @@ else
   echo "    インストール: npm install -g @anthropic-ai/claude-code"
 fi
 
+if command -v gum &>/dev/null; then
+  echo "  ✓ gum: $(gum --version 2>/dev/null | head -1 || echo "found")"
+else
+  echo "  ○ gum が見つかりません (オプション)"
+  echo "    よりリッチなUIのために: brew install gum"
+  echo "    gum なしでも cw は通常のプロンプトで動作します。"
+fi
+
 # ファイルをコピー
 echo ""
 echo "→ ファイルをインストールしています..."
@@ -54,23 +62,24 @@ cp -r "$CW_REPO_DIR/skills/"* "$CW_HOME/skills/" 2>/dev/null || true
 mkdir -p "$CW_HOME/web/templates/partials"
 cp -r "$CW_REPO_DIR/web/"* "$CW_HOME/web/"
 
+install_tmp=$(mktemp)
 sed -e "s|CW_LIB_DIR=.*|CW_LIB_DIR=\"$CW_HOME/lib\"|" \
     -e "s|CW_SKILLS_DIR=.*|CW_SKILLS_DIR=\"$CW_HOME/skills\"|" \
     -e "s|CW_WEB_DIR=.*|CW_WEB_DIR=\"$CW_HOME/web\"|" \
-  "$CW_REPO_DIR/bin/cw" > "/tmp/cw_install_tmp"
+  "$CW_REPO_DIR/bin/cw" > "$install_tmp"
 
 if [[ -w "$INSTALL_BIN" ]]; then
-  cp "/tmp/cw_install_tmp" "$INSTALL_BIN/cw"
+  cp "$install_tmp" "$INSTALL_BIN/cw"
   chmod +x "$INSTALL_BIN/cw"
   echo "  ✓ インストール: $INSTALL_BIN/cw"
 else
   echo "  $INSTALL_BIN への書き込み権限が必要です"
-  sudo cp "/tmp/cw_install_tmp" "$INSTALL_BIN/cw"
+  sudo cp "$install_tmp" "$INSTALL_BIN/cw"
   sudo chmod +x "$INSTALL_BIN/cw"
   echo "  ✓ インストール (sudo): $INSTALL_BIN/cw"
 fi
 
-rm -f "/tmp/cw_install_tmp"
+rm -f "$install_tmp"
 
 # ソースパスを保存（cw update で使用）
 echo "$CW_REPO_DIR" > "$CW_HOME/source_path"
