@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "d8dde1a1ca19",
+  "session_id": "1c032126-019e-4e9c-9187-46c54d0c92a9",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-13T01:36:18.21068Z",
+  "branch": "main",
+  "checkpoints_count": 6,
+  "files_touched": [
+    ".gitignore",
+    "docs/superpowers/specs/2026-03-13-interactive-wizard-design.md"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "651a122c96f2",
+  "token_usage": {
+    "input_tokens": 162,
+    "cache_creation_tokens": 225590,
+    "cache_read_tokens": 6307329,
+    "output_tokens": 41023,
+    "api_call_count": 57
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-13T01:36:17.906807Z",
+    "agent_lines": 190,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 190,
+    "agent_percentage": 100
+  }
+}

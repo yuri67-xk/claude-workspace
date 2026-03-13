@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "d8dde1a1ca19",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 6,
+  "files_touched": [
+    ".gitignore",
+    "docs/superpowers/specs/2026-03-13-interactive-wizard-design.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/d8/dde1a1ca19/0/metadata.json",
+      "transcript": "/d8/dde1a1ca19/0/full.jsonl",
+      "context": "/d8/dde1a1ca19/0/context.md",
+      "content_hash": "/d8/dde1a1ca19/0/content_hash.txt",
+      "prompt": "/d8/dde1a1ca19/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 162,
+    "cache_creation_tokens": 225590,
+    "cache_read_tokens": 6307329,
+    "output_tokens": 41023,
+    "api_call_count": 57
+  }
+}
