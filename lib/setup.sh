@@ -1,174 +1,249 @@
 #!/usr/bin/env bash
 # setup.sh - cw setup command
 
+# Module-level wizard state (shared across phase functions)
+_SETUP_NAME=""
+_SETUP_DESC=""
+_SETUP_DIRS=()
+_SETUP_ROLES=()
+
+# Phase 1: Basic Info
+# Arguments: [default_name]
+_setup_phase1() {
+  local default_name="${1:-}"
+  echo ""
+  if command -v gum >/dev/null 2>&1; then
+    gum style --bold "$(t "phase1_header")" 2>/dev/null || true
+  else
+    echo "=== $(t "phase1_header") ==="
+  fi
+  echo ""
+  _SETUP_NAME=$(gum_input "$(t "workspace_name")" "${default_name}")
+  if [[ -z "${_SETUP_NAME}" ]]; then
+    error "$(t "workspace_name") $(t "required")"
+    return 1
+  fi
+  _SETUP_DESC=$(gum_input "$(t "workspace_desc")" "")
+}
+
+# Phase 2: Directories
+_setup_phase2() {
+  echo ""
+  if command -v gum >/dev/null 2>&1; then
+    gum style --bold "$(t "phase2_header")" 2>/dev/null || true
+  else
+    echo "=== $(t "phase2_header") ==="
+  fi
+  echo ""
+
+  _SETUP_DIRS=()
+  _SETUP_ROLES=()
+
+  while true; do
+    # Show live list if any dirs added
+    if [[ ${#_SETUP_DIRS[@]} -gt 0 ]]; then
+      echo "$(t "dirs_added_so_far")"
+      local i
+      for i in "${!_SETUP_DIRS[@]}"; do
+        local role_label=""
+        if [[ -n "${_SETUP_ROLES[$i]:-}" ]]; then
+          role_label="  (${_SETUP_ROLES[$i]})"
+        fi
+        echo "  ✓  ${_SETUP_DIRS[$i]}${role_label}"
+      done
+      echo ""
+    fi
+
+    local raw_path
+    raw_path=$(gum_path_input "$(t "dir_add_path") ($(t "skip") = Enter)" "" 2>/dev/null || true)
+
+    # Empty input → finish
+    if [[ -z "${raw_path}" ]]; then
+      break
+    fi
+
+    local expanded_path
+    expanded_path=$(expand_path "${raw_path}")
+
+    # Validate existence
+    if [[ ! -d "${expanded_path}" ]]; then
+      gum_error "$(t "dir_not_found"): ${expanded_path}"
+      gum_confirm "$(t "path_add_anyway")" || continue
+    fi
+
+    local role
+    role=$(gum_input "$(t "dir_add_role")" "")
+
+    _SETUP_DIRS+=("${expanded_path}")
+    _SETUP_ROLES+=("${role}")
+    success "$(t "dir_added"): ${expanded_path}"
+  done
+
+  if [[ ${#_SETUP_DIRS[@]} -eq 0 ]]; then
+    warn "No directories specified. Use cw add-dir later to add."
+  fi
+}
+
+# Phase 3: Confirm & Launch
+# Arguments: <target_dir>
+# Returns: the chosen constant via exit code + global _SETUP_CHOICE
+# Prints the choice (LAUNCH, CREATE, or CANCEL) to stdout
+_setup_phase3() {
+  local target_dir="${1}"
+  echo ""
+  if command -v gum >/dev/null 2>&1; then
+    gum style --bold "$(t "phase3_header")" 2>/dev/null || true
+  else
+    echo "=== $(t "phase3_header") ==="
+  fi
+  echo ""
+
+  # Summary
+  echo "$(t "phase3_summary"):"
+  echo "  $(t "workspace_name"):  ${_SETUP_NAME}"
+  if [[ -n "${_SETUP_DESC}" ]]; then
+    echo "  $(t "workspace_desc"):  ${_SETUP_DESC}"
+  fi
+  echo "  $(t "directories"):  ${#_SETUP_DIRS[@]}"
+  echo "  $(t "path"):  ${target_dir}"
+  echo "  Files: .workspace.json, CLAUDE.md"
+  echo ""
+
+  local launch_label create_label cancel_label
+  launch_label=$(t "phase3_opt_launch")
+  create_label=$(t "phase3_opt_create")
+  cancel_label=$(t "phase3_opt_cancel")
+
+  local choice
+  choice=$(gum_choose \
+    "${launch_label}" "LAUNCH" \
+    "${create_label}" "CREATE" \
+    "${cancel_label}" "CANCEL")
+  echo "${choice}"
+}
+
 # Arguments: [prefill_name]
 #   prefill_name ... passed when called from cw new to skip name input
 cmd_setup() {
   require_jq
 
   local prefill_name="${1:-}"
-
   local target_dir
   target_dir="$(pwd)"
 
+  # Source gum wrappers
+  # shellcheck source=lib/gum.sh
+  local gum_sh="${CW_LIB_DIR:-$(dirname "${BASH_SOURCE[0]}")}/gum.sh"
+  [[ -f "${gum_sh}" ]] && source "${gum_sh}" || true
+
   # Check if already set up as workspace
-  if is_workspace "$target_dir"; then
+  if is_workspace "${target_dir}"; then
     warn "$(t "workspace_already_setup")"
     local existing_name
-    existing_name=$(ws_get "$target_dir/$WORKSPACE_FILE" '.name')
-    echo "  $(t "workspace_name"): $(bold "$existing_name")"
+    existing_name=$(ws_get "${target_dir}/${WORKSPACE_FILE}" '.name')
+    echo "  $(t "workspace_name"): $(bold "${existing_name}")"
     echo ""
-    read -rep "  $(t "re_setup") [y/N]: " confirm
-    [[ "$confirm" =~ ^[Yy]$ ]] || { info "$(t "cancel")"; exit 0; }
+    gum_confirm "$(t "re_setup")" || { info "$(t "cancel")"; exit 0; }
     echo ""
   fi
 
   echo ""
   echo "$(bold "Claude Workspace Setup")"
-  echo "$(dim "$(t "directory"): $target_dir")"
+  echo "$(dim "$(t "directory"): ${target_dir}")"
   echo ""
 
-  # ──────────────────────────────
-  # Step 1: Workspace name
-  # ──────────────────────────────
-  step "Step 1: $(t "setup_step1")"
-  local ws_name
-  if [[ -n "$prefill_name" ]]; then
-    # Called from cw new, name already set
-    ws_name="$prefill_name"
-    success "$(t "workspace_name"): $ws_name"
+  # Determine default name from directory basename
+  local default_name
+  if [[ -n "${prefill_name}" ]]; then
+    default_name="${prefill_name}"
   else
-    local default_name
-    default_name="$(basename "$target_dir")"
-    read -rep "  $(t "workspace_name") [${default_name}]: " ws_name
-    ws_name="${ws_name:-$default_name}"
-    success "$(t "workspace_name"): $ws_name"
+    default_name="$(basename "${target_dir}")"
   fi
 
-  # ──────────────────────────────
-  # Step 2: Description
-  # ──────────────────────────────
-  step "Step 2: $(t "setup_step2")"
-  read -rep "  $(t "workspace_desc"): " ws_description
-  ws_description="${ws_description:-}"
+  # ── Phase 1: Basic Info ──────────────────────────────────────
+  _setup_phase1 "${default_name}" || return 1
 
-  # ──────────────────────────────
-  # Step 3: Add target directories
-  # ──────────────────────────────
-  step "Step 3: $(t "setup_step3")"
-  echo "  $(dim "$(t "setup_path_hint")")"
-  echo "  $(dim "Example: ~/repos/my-project")"
-  echo ""
+  # ── Phase 2: Directories ────────────────────────────────────
+  _setup_phase2
 
-  local dirs=()
-  local dir_roles=()
+  # ── Phase 3: Confirm & Launch ───────────────────────────────
+  local choice
+  choice=$(_setup_phase3 "${target_dir}")
 
-  while true; do
-    local raw_path
-    raw_path=$(select_dir_with_fzf "$(t "select_dir_prompt")")
-    [[ -z "$raw_path" ]] && break
+  case "${choice}" in
+    CANCEL|"")
+      info "$(t "cancel")"
+      return 0
+      ;;
+    LAUNCH|CREATE)
+      # Step: Generate workspace.json
+      step "$(t "setup_config_file")"
+      local ws_file="${target_dir}/${WORKSPACE_FILE}"
+      local created_at
+      created_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-    local expanded_path="$raw_path"
+      local dirs_json="[]"
+      for i in "${!_SETUP_DIRS[@]+"${!_SETUP_DIRS[@]}"}"; do
+        local dir="${_SETUP_DIRS[$i]}"
+        local role="${_SETUP_ROLES[$i]:-}"
+        dirs_json=$(echo "${dirs_json}" | jq \
+          --arg path "${dir}" \
+          --arg role "${role}" \
+          '. += [{"path": $path, "role": $role}]')
+      done
 
-    if [[ ! -d "$expanded_path" ]]; then
-      warn "$(t "dir_not_found"): $expanded_path"
-      read -rep "  $(t "add_anyway") [y/N]: " force
-      [[ "$force" =~ ^[Yy]$ ]] || continue
-    fi
+      jq -n \
+        --arg name "${_SETUP_NAME}" \
+        --arg description "${_SETUP_DESC}" \
+        --arg created_at "${created_at}" \
+        --arg workspace_path "${target_dir}" \
+        --argjson dirs "${dirs_json}" \
+        '{
+          name: $name,
+          description: $description,
+          workspace_path: $workspace_path,
+          created_at: $created_at,
+          dirs: $dirs
+        }' > "${ws_file}"
+      success "$(t "created"): ${ws_file}"
 
-    # Role label (optional)
-    read -rep "  $(t "dir_add_role"): " role
-    role="${role:-}"
+      # Step: Generate CLAUDE.md
+      step "$(t "setup_claude_md")"
+      local claude_md="${target_dir}/${WORKSPACE_CLAUDE_MD}"
+      _generate_workspace_claude_md "${claude_md}" "${_SETUP_NAME}" "${_SETUP_DESC}" "${ws_file}"
+      success "$(t "created"): ${claude_md}"
 
-    dirs+=("$expanded_path")
-    dir_roles+=("$role")
-    success "$(t "dir_added"): $expanded_path $([ -n "$role" ] && echo "(${role})")"
-  done
+      # Step: Install skills
+      step "$(t "setup_step6")"
+      if [[ -d "${CW_SKILLS_DIR:-}" ]]; then
+        gum_spin "$(t "setup_step6")" bash -c "
+          ws_skills_dir='${target_dir}/.claude/skills'
+          mkdir -p \"\${ws_skills_dir}\"
+          for skill_dir in '${CW_SKILLS_DIR}'/*/; do
+            [[ -d \"\${skill_dir}\" ]] || continue
+            skill_name=\"\$(basename \"\${skill_dir}\")\"
+            cp -R \"\${skill_dir}\" \"\${ws_skills_dir}/\${skill_name}\"
+          done
+        "
+        success "$(t "setup_skills_installed"): .claude/skills/"
+      fi
 
-  if [[ ${#dirs[@]} -eq 0 ]]; then
-    warn "No directories specified. Use cw add-dir later to add."
-  fi
+      # Step: Register to global registry
+      step "$(t "setup_step7")"
+      registry_add "${_SETUP_NAME}" "${target_dir}"
+      success "$(t "registered"): ~/.claude-workspace/registry.json"
 
-  # ──────────────────────────────
-  # Step 4: Generate workspace.json
-  # ──────────────────────────────
-  step "Step 4: $(t "setup_step4")"
+      echo ""
+      echo "$(green "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")"
+      echo "$(green "  $(t "setup_complete")")"
+      echo "$(green "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")"
+      echo ""
 
-  local ws_file="$target_dir/$WORKSPACE_FILE"
-  local created_at
-  created_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-
-  # Build JSON
-  local dirs_json="[]"
-  for i in "${!dirs[@]}"; do
-    local dir="${dirs[$i]}"
-    local role="${dir_roles[$i]}"
-    dirs_json=$(echo "$dirs_json" | jq \
-      --arg path "$dir" \
-      --arg role "$role" \
-      '. += [{"path": $path, "role": $role}]')
-  done
-
-  jq -n \
-    --arg name "$ws_name" \
-    --arg description "$ws_description" \
-    --arg created_at "$created_at" \
-    --arg workspace_path "$target_dir" \
-    --argjson dirs "$dirs_json" \
-    '{
-      name: $name,
-      description: $description,
-      workspace_path: $workspace_path,
-      created_at: $created_at,
-      dirs: $dirs
-    }' > "$ws_file"
-
-  success "$(t "created"): $ws_file"
-
-  # ──────────────────────────────
-  # Step 5: Generate CLAUDE.md
-  # ──────────────────────────────
-  step "Step 5: $(t "setup_step5")"
-
-  local claude_md="$target_dir/$WORKSPACE_CLAUDE_MD"
-  _generate_workspace_claude_md "$claude_md" "$ws_name" "$ws_description" "$ws_file"
-  success "$(t "created"): $claude_md"
-
-  # ──────────────────────────────
-  # Step 6: Install skills to .claude/skills/
-  # ──────────────────────────────
-  step "Step 6: $(t "setup_step6")"
-
-  if [[ -d "$CW_SKILLS_DIR" ]]; then
-    local ws_skills_dir="$target_dir/.claude/skills"
-    mkdir -p "$ws_skills_dir"
-    for skill_dir in "$CW_SKILLS_DIR"/*/; do
-      [[ -d "$skill_dir" ]] || continue
-      local skill_name
-      skill_name="$(basename "$skill_dir")"
-      cp -R "$skill_dir" "$ws_skills_dir/$skill_name"
-    done
-    success "$(t "setup_skills_installed"): .claude/skills/"
-  fi
-
-  # ──────────────────────────────
-  # Step 7: Register to global registry
-  # ──────────────────────────────
-  step "Step 7: $(t "setup_step7")"
-  registry_add "$ws_name" "$target_dir"
-  success "$(t "registered"): ~/.claude-workspace/registry.json"
-
-  # ──────────────────────────────
-  # Complete
-  # ──────────────────────────────
-  echo ""
-  echo "$(green "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")"
-  echo "$(green "  $(t "setup_complete")")"
-  echo "$(green "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")"
-  echo ""
-  echo "  $(t "setup_run")"
-  echo "  $(bold "  cw")"
-  echo ""
+      if [[ "${choice}" == "LAUNCH" ]]; then
+        cmd_launch "${target_dir}"
+      fi
+      ;;
+  esac
 }
 
 # Generate workspace CLAUDE.md template
