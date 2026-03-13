@@ -7,16 +7,22 @@ cmd_launch() {
   local target_dir
   target_dir="$(pwd)"
 
-  # If workspace name is provided as argument, find the directory
+  # Optional first argument: absolute path or workspace name
   if [[ -n "${1:-}" ]]; then
-    local found
-    found=$(_find_workspace_by_name "$1")
-    if [[ -z "$found" ]]; then
-      error "$(t "workspace_not_found"): $1"
-      echo "  Registered workspaces: cw list"
-      exit 1
+    if [[ "${1}" == /* ]]; then
+      # Absolute path provided directly (called from Phase 3 of setup wizard)
+      target_dir="${1}"
+    else
+      # Workspace name — look up in registry
+      local found
+      found=$(_find_workspace_by_name "$1")
+      if [[ -z "$found" ]]; then
+        error "$(t "workspace_not_found"): $1"
+        echo "  Registered workspaces: cw list"
+        exit 1
+      fi
+      target_dir="$found"
     fi
-    target_dir="$found"
   fi
 
   if ! is_workspace "$target_dir"; then
