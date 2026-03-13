@@ -205,6 +205,18 @@ t() {
         "web_starting") echo "Web UI を起動しました →" ;;
         "web_stop_hint") echo "Ctrl+C で停止" ;;
 
+        # === Wizard ===
+        "phase1_header") echo "フェーズ 1/3: 基本情報" ;;
+        "phase2_header") echo "フェーズ 2/3: ディレクトリ" ;;
+        "phase3_header") echo "フェーズ 3/3: 確認" ;;
+        "phase3_opt_launch") echo "作成して Claude を起動" ;;
+        "phase3_opt_create") echo "作成のみ" ;;
+        "phase3_opt_cancel") echo "キャンセル" ;;
+        "phase3_summary") echo "内容確認" ;;
+        "path_add_anyway") echo "ディレクトリが存在しません。追加しますか?" ;;
+        "dirs_added_so_far") echo "追加済み:" ;;
+        "gum_required_hint") echo "より良いUIのために gum をインストール: brew install gum" ;;
+
         *) echo "$key" ;;
       esac
       ;;
@@ -383,6 +395,18 @@ t() {
         "web_pip_failed") echo "pip install failed" ;;
         "web_starting") echo "Web UI started →" ;;
         "web_stop_hint") echo "Press Ctrl+C to stop" ;;
+
+        # === Wizard ===
+        "phase1_header") echo "Phase 1/3: Basic Info" ;;
+        "phase2_header") echo "Phase 2/3: Directories" ;;
+        "phase3_header") echo "Phase 3/3: Confirm" ;;
+        "phase3_opt_launch") echo "Create & Launch Claude" ;;
+        "phase3_opt_create") echo "Create only" ;;
+        "phase3_opt_cancel") echo "Cancel" ;;
+        "phase3_summary") echo "Summary" ;;
+        "path_add_anyway") echo "Path does not exist. Add anyway?" ;;
+        "dirs_added_so_far") echo "Added so far:" ;;
+        "gum_required_hint") echo "Install gum for a richer UI: brew install gum" ;;
 
         *) echo "$key" ;;
       esac
