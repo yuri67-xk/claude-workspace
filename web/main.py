@@ -283,7 +283,13 @@ async def launch_workspace(name: str):
     # Escape backslashes and double quotes for bash -c string
     safe_name = name.replace("\\", "\\\\").replace('"', '\\"')
     ghostty_bin = shutil.which("ghostty") or "/Applications/Ghostty.app/Contents/MacOS/ghostty"
-    subprocess.Popen([ghostty_bin, "--", "bash", "-c", f'cw launch "{safe_name}"'])
+    try:
+        subprocess.Popen([ghostty_bin, "--", "bash", "-c", f'cw launch "{safe_name}"'])
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=503,
+            detail="Ghostty not found. Please install Ghostty from https://ghostty.org",
+        )
 
     # Touch last_used in registry
     workspaces = _read_registry()
@@ -309,6 +315,16 @@ async def forget_workspace(name: str):
 @app.post("/workspace/{name}/delete")
 async def delete_workspace(name: str):
     ws_entry, ws_path = _get_workspace(name)
+
+    # Safety check: only allow deletion of directories under WorkingProjects/
+    working_projects = Path(
+        os.environ.get("WORKING_PROJECTS_DIR", str(Path.home() / "WorkingProjects"))
+    ).expanduser().resolve()
+    if not str(ws_path).startswith(str(working_projects) + "/"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Workspace directory is not under WorkingProjects/. Use 'forget' to remove from registry only.",
+        )
 
     # Delete directory first, then remove from registry
     if ws_path.exists():
