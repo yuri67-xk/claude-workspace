@@ -58,13 +58,15 @@ cmd_update() {
   # Copy lib/*.sh
   step "$(t "update_installing")"
 
-  local cw_lib_dir="${CW_DIR:-$HOME/.claude-workspace}/lib"
-  mkdir -p "$cw_lib_dir"
+  local cw_home="${CW_DIR:-$HOME/.claude-workspace}"
+  local install_bin="${INSTALL_BIN:-/usr/local/bin}"
+
+  mkdir -p "$cw_home/lib"
 
   local file_count=0
   for lib_file in "$source_dir/lib/"*.sh; do
     [[ -f "$lib_file" ]] || continue
-    cp "$lib_file" "$cw_lib_dir/"
+    cp "$lib_file" "$cw_home/lib/"
     file_count=$((file_count + 1))
     echo "  $(dim "Copy: $(basename "$lib_file")")"
   done
@@ -75,6 +77,41 @@ cmd_update() {
   fi
 
   success "$file_count files copied"
+  echo ""
+
+  # Copy skills/*
+  if [[ -d "$source_dir/skills" ]]; then
+    mkdir -p "$cw_home/skills"
+    cp -r "$source_dir/skills/"* "$cw_home/skills/" 2>/dev/null || true
+    echo "  $(dim "Copy: skills/")"
+  fi
+
+  # Copy web/*
+  if [[ -d "$source_dir/web" ]]; then
+    mkdir -p "$cw_home/web/templates/partials"
+    cp -r "$source_dir/web/"* "$cw_home/web/"
+    echo "  $(dim "Copy: web/")"
+  fi
+
+  # Install bin/cw (with sed path substitution)
+  local tmp_cw
+  tmp_cw=$(mktemp)
+  sed -e "s|CW_LIB_DIR=.*|CW_LIB_DIR=\"$cw_home/lib\"|" \
+      -e "s|CW_SKILLS_DIR=.*|CW_SKILLS_DIR=\"$cw_home/skills\"|" \
+      -e "s|CW_WEB_DIR=.*|CW_WEB_DIR=\"$cw_home/web\"|" \
+    "$source_dir/bin/cw" > "$tmp_cw"
+
+  if [[ -w "$install_bin" ]]; then
+    cp "$tmp_cw" "$install_bin/cw"
+    chmod +x "$install_bin/cw"
+    echo "  $(dim "Copy: bin/cw → $install_bin/cw")"
+  else
+    sudo cp "$tmp_cw" "$install_bin/cw"
+    sudo chmod +x "$install_bin/cw"
+    echo "  $(dim "Copy (sudo): bin/cw → $install_bin/cw")"
+  fi
+  rm -f "$tmp_cw"
+
   echo ""
 
   # Show version
