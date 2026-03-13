@@ -72,8 +72,8 @@ cw new
 ```
 
 - `~/WorkingProjects/<名前>/` フォルダを自動作成
-- そのまま `cw setup` に進む
-- セットアップ完了後、Claude Code を起動
+- `cw setup` に進んで Workspace を設定する
+- Claude Code を起動するには `cw` を実行する
 
 名前を引数で渡すことも可能:
 

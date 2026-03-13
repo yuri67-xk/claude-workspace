@@ -72,8 +72,8 @@ Interactive setup:
 ```
 
 - Automatically creates `~/WorkingProjects/<name>/` folder
-- Proceeds to `cw setup`
-- Launches Claude Code after setup
+- Proceeds to `cw setup` to configure the workspace
+- Run `cw` to launch Claude Code after setup
 
 You can also pass the name as an argument:
 
