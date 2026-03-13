@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # menu.sh - Interactive Workspace selection menu
 
+# Source gum wrappers (optional, graceful degradation)
+_gum_sh="${CW_LIB_DIR:-$(dirname "${BASH_SOURCE[0]}")}/gum.sh"
+[[ -f "${_gum_sh}" ]] && source "${_gum_sh}" || true
+
 # Module-level arrays (no nameref needed, bash 3.2 compatible)
 _CW_MENU_PATHS=()
 _CW_MENU_NAMES=()
@@ -255,8 +259,7 @@ _menu_numbered_pick() {
     echo "" >&2
     info "$(t "workspace_not_found")" >&2
     echo "" >&2
-    read -rep "  $(t "new_workspace")? [Y/n]: " ans
-    if [[ ! "$ans" =~ ^[Nn]$ ]]; then
+    if gum_confirm "$(t "new_workspace")"; then
       echo "CREATE_NEW"
     else
       echo ""
@@ -448,8 +451,7 @@ _menu_forget() {
     warn "\"${ws_name}\" $(t "remove_from_registry")"
     echo "  $(dim "$(t "files_remain")")"
     echo ""
-    read -rp "  $(t "continue") [y/N]: " confirm
-    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    if gum_confirm "$(t "continue")"; then
       registry_remove "$ws_path"
       success "$(t "deleted"): $ws_name"
       echo ""
@@ -475,8 +477,7 @@ _menu_forget() {
     echo "  $(dim "$ws_path")"
     warn "$(t "irreversible")"
     echo ""
-    read -rp "  $(t "continue") [y/N]: " confirm
-    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    if gum_confirm "$(t "continue")"; then
       registry_remove "$ws_path"
       rm -rf "$ws_path"
       success "$(t "forget_dir_deleted"): $ws_name"
@@ -523,10 +524,9 @@ _menu_cleanup() {
     echo "  $(red "✗")  ${missing_names[$i]}  $(dim "${missing_paths[$i]}")"
   done
   echo ""
-  read -rp "  $(t "continue") [y/N]: " confirm
-  if [[ "$confirm" =~ ^[Yy]$ ]]; then
+  if gum_confirm "$(t "continue")"; then
     local path
-    for path in "${missing_paths[@]+${missing_paths[@]}}"; do
+    for path in "${missing_paths[@]+"${missing_paths[@]}"}"; do
       registry_remove "$path"
     done
     success "${#missing_paths[@]} $(t "cleanup_done")"

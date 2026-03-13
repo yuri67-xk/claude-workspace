@@ -2,6 +2,10 @@
 # new.sh - cw new command
 # Creates a new Workspace folder under WorkingProjects/ and sets it up
 
+# Source gum wrappers (optional, graceful degradation)
+_gum_sh="${CW_LIB_DIR:-$(dirname "${BASH_SOURCE[0]}")}/gum.sh"
+[[ -f "${_gum_sh}" ]] && source "${_gum_sh}" || true
+
 cmd_new() {
   require_jq
 
@@ -36,7 +40,7 @@ cmd_new() {
   # Spaces -> hyphens, remove leading/trailing hyphens
   # ──────────────────────────────
   local folder_name
-  folder_name=$(echo "$ws_name" | tr ' ' '-' | sed 's/^-*//;s/-*$//')
+  folder_name=$(echo "$ws_name" | tr '/ \\:*?' '-' | sed 's/^-*//;s/-*$//' | sed 's/-\{2,\}/-/g')
 
   local target_dir="$wp_dir/$folder_name"
 
@@ -49,20 +53,17 @@ cmd_new() {
   if [[ -d "$target_dir" ]]; then
     if is_workspace "$target_dir"; then
       warn "$(t "already_exists")"
-      read -rep "  Launch as is? [Y/n]: " ans
-      if [[ ! "$ans" =~ ^[Nn]$ ]]; then
+      if gum_confirm "$(t "launch_as_is")"; then
         cd "$target_dir"
         cmd_launch
       fi
       return
     else
       warn "$(t "directory") $(t "already_exists"): $target_dir"
-      read -rep "  $(t "workspace_setup")? [Y/n]: " ans
-      [[ "$ans" =~ ^[Nn]$ ]] && { info "$(t "cancel")"; exit 0; }
+      gum_confirm "$(t "workspace_setup")?" || { info "$(t "cancel")"; exit 0; }
     fi
   else
-    read -rep "  $(t "create") [Y/n]: " confirm
-    [[ "$confirm" =~ ^[Nn]$ ]] && { info "$(t "cancel")"; exit 0; }
+    gum_confirm "$(t "create")" || { info "$(t "cancel")"; exit 0; }
 
     mkdir -p "$target_dir"
     success "$(t "created"): $target_dir"
